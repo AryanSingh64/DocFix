@@ -8,7 +8,7 @@ import { NextResponse } from 'next/server';
 import os from 'os';
 
 
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { createServerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers';
 
 
@@ -17,11 +17,11 @@ const execPromise = promisify(exec); // Convert exec to use async/await
 // NEW: Get Ghostscript executable path
 function getGhostscriptPath() {
   const isWindows = process.platform === 'win32';
-  
+
   if (!isWindows) {
     return 'gs'; // Mac/Linux use gs from PATH
   }
-  
+
   // Common Windows installation paths
   const possiblePaths = [
     'gswin64c', // Try PATH first
@@ -35,14 +35,14 @@ function getGhostscriptPath() {
     'C:\\Program Files (x86)\\gs\\gs10.06.0\\bin\\gswin32c.exe',
     'C:\\Program Files (x86)\\gs\\gs10.05.0\\bin\\gswin32c.exe',
   ];
-  
+
   return possiblePaths;
 }
 
 // NEW: Check if Ghostscript is installed
 async function isGhostscriptAvailable() {
   const paths = Array.isArray(getGhostscriptPath()) ? getGhostscriptPath() : [getGhostscriptPath()];
-  
+
   for (const gsPath of paths) {
     try {
       await execPromise(`"${gsPath}" --version`);
@@ -53,7 +53,7 @@ async function isGhostscriptAvailable() {
       continue;
     }
   }
-  
+
   console.log('✗ Ghostscript not found in common locations');
   return null;
 }
@@ -71,7 +71,7 @@ export async function POST(request) {
     // Debug: Log the request
     console.log('Received POST request to /api/compress-pdf');
     console.log('Content-Type:', request.headers.get('content-type'));
-    
+
     // Check if the body has already been consumed
     // if (request.bodyUsed) {
     //   console.error('Request body already consumed!');
@@ -80,21 +80,23 @@ export async function POST(request) {
     //     { status: 400 }
     //   );
     // }
-    
+
     // Get the uploaded file from FormData
     let formData;
 
     formData = await request.formData();
 
-      console.log('FormData parsed successfully');
-    
+    console.log('FormData parsed successfully');
+
     const quality = formData.get('quality') || 'ebook';
+    const fallbackUserId = formData.get('user_id'); // Get user_id from client
 
     console.log(quality);
-    
-    
+    console.log('Fallback user ID from client:', fallbackUserId);
+
+
     const file = formData.get('pdf');
-    
+
     if (!file) {
       return NextResponse.json(
         { error: 'No PDF file provided' },
@@ -116,16 +118,16 @@ export async function POST(request) {
 
     // Check if Ghostscript is available
     const gsPath = await isGhostscriptAvailable();
-    
+
     if (gsPath) {
       // Use Ghostscript for compression
       console.log('Using Ghostscript for compression...');
-      return await compressWithGhostscript(buffer, file.name, gsPath, quality);
+      return await compressWithGhostscript(buffer, file.name, gsPath, quality, request, fallbackUserId);
     } else {
       // If Ghostscript not available, return helpful error
       console.log('Ghostscript not available');
       return NextResponse.json(
-        { 
+        {
           error: 'Ghostscript not installed',
           details: 'Please install Ghostscript to compress PDFs',
           hint: 'Download from: https://www.ghostscript.com/download/gsdnld.html'
@@ -133,13 +135,13 @@ export async function POST(request) {
         { status: 500 }
       );
     }
-    
+
   } catch (error) {
     console.error('PDF compression error:', error);
-    
+
     // Return error response
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to compress PDF',
         details: error.message,
         hint: 'Install Ghostscript from: https://www.ghostscript.com/download/gsdnld.html'
@@ -150,7 +152,7 @@ export async function POST(request) {
 }
 
 // Compress using Ghostscript
-async function compressWithGhostscript(buffer, fileName, gsPath, quality) {
+async function compressWithGhostscript(buffer, fileName, gsPath, quality, request, fallbackUserId) {
   let inputPath = null;
   let outputPath = null;
 
@@ -164,17 +166,17 @@ async function compressWithGhostscript(buffer, fileName, gsPath, quality) {
     // Using os.tmpdir() instead of /tmp folder for all OS
     const tempDir = os.tmpdir();
     console.log('Using temp directory:', tempDir);
-    
+
     // Create unique temp file paths
     const timestamp = Date.now();
     const randomId = Math.random().toString(36).substring(7);
-    
+
     inputPath = path.join(tempDir, `input-${timestamp}-${randomId}.pdf`);
     outputPath = path.join(tempDir, `output-${timestamp}-${randomId}.pdf`);
-    
+
     // Save buffer to disk
     await writeFile(inputPath, buffer);
-    
+
     // Use the Ghostscript path we found
     const command = `"${gsPath}" -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/${quality} -dNOPAUSE -dQUIET -dBATCH -dDownsampleColorImages=true -dColorImageResolution=150 -dColorImageDownsampleType=/Bicubic -sOutputFile="${outputPath}" "${inputPath}"`;
 
@@ -183,9 +185,9 @@ async function compressWithGhostscript(buffer, fileName, gsPath, quality) {
     // /ebook = 150 DPI (good balance) ← RECOMMENDED
     // /printer = 300 DPI (high quality)
     // /prepress = 300 DPI (print-ready)
-    
+
     console.log('Running Ghostscript compression...');
-    
+
 
     console.log('Full command:', command);
     console.log('Quality setting being used:', quality);
@@ -193,28 +195,98 @@ async function compressWithGhostscript(buffer, fileName, gsPath, quality) {
 
     // Execute Ghostscript command
     const { stdout, stderr } = await execPromise(command);
-    
+
     if (stderr && !stderr.includes('*** WARNING ***')) {
       console.error('Ghostscript stderr:', stderr);
     }
-    
+
     // Read the compressed PDF
     const compressedBuffer = await readFile(outputPath);
-    
+
     console.log('Compressed PDF size:', compressedBuffer.length, 'bytes');
-    
+
     // Calculate compression statistics
     const originalSize = buffer.length;
     const compressedSize = compressedBuffer.length;
     const compressionRatio = ((1 - compressedSize / originalSize) * 100).toFixed(2);
-    
+
     console.log(`Compression ratio: ${compressionRatio}% reduction`);
-    
+
     // Cleanup temp files
     await unlink(inputPath);
     await unlink(outputPath);
-    
+
     // Return the compressed PDF with stats in headers
+
+    // NEW: Save usage to Supabase
+    let dbSaveSuccess = false;
+    let dbErrorMessage = '';
+    let actualUserId = null;
+
+    try {
+      console.log('=== DEBUGGING COOKIES ===');
+      console.log('All request cookies:', request.cookies.getAll());
+
+      const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+        {
+          cookies: {
+            getAll() {
+              return request.cookies.getAll()
+            },
+            setAll(cookiesToSet) {
+              // We're not setting cookies here
+            }
+          },
+        }
+      );
+
+      // Get current user
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+      console.log('Session data:', session);
+      console.log('Session error:', sessionError);
+
+      // Use session user if available, otherwise use fallback
+      if (session?.user) {
+        actualUserId = session.user.id;
+        console.log('Using user ID from session:', actualUserId);
+      } else if (fallbackUserId) {
+        actualUserId = fallbackUserId;
+        console.log('Using fallback user ID from client:', actualUserId);
+      }
+
+      if (actualUserId) {
+        console.log('Saving usage for user:', actualUserId);
+
+        const { error: dbError } = await supabase
+          .from('compression_usage')
+          .insert({
+            user_id: actualUserId,
+            file_name: fileName,
+            original_size: originalSize,
+            compressed_size: compressedSize,
+            quality: quality,
+            compressed_at: new Date().toISOString()
+          });
+
+        if (dbError) {
+          console.error('Error saving usage to DB:', dbError);
+          dbErrorMessage = dbError.message;
+        } else {
+          console.log('Usage saved successfully');
+          dbSaveSuccess = true;
+        }
+      } else {
+        console.warn('No user session and no fallback user ID found, skipping usage tracking');
+        dbErrorMessage = 'No user session found';
+      }
+    } catch (dbErr) {
+      console.error('Unexpected error saving usage:', dbErr);
+      dbErrorMessage = dbErr.message;
+    }
+
     return new NextResponse(compressedBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
@@ -223,11 +295,13 @@ async function compressWithGhostscript(buffer, fileName, gsPath, quality) {
         'X-Compressed-Size': compressedSize.toString(),
         'X-Compression-Ratio': compressionRatio,
         'X-Compression-Method': 'ghostscript',
+        'X-DB-Save-Success': dbSaveSuccess.toString(),
+        'X-DB-Error': dbErrorMessage || 'None'
       },
     });
   } catch (error) {
     console.error('Ghostscript compression error:', error);
-    
+
     // Cleanup temp files if they exist
     try {
       if (inputPath) await unlink(inputPath);
@@ -235,7 +309,7 @@ async function compressWithGhostscript(buffer, fileName, gsPath, quality) {
     } catch (cleanupError) {
       // Ignore cleanup errors
     }
-    
+
     throw error;
   }
 }
