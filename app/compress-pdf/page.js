@@ -1,7 +1,11 @@
 "use client"
-import React, {useState} from 'react'
+import React, {use, useState} from 'react'
+import { useRouter } from 'next/navigation';
+
 
 const page = () => {
+  const router = useRouter();
+
   //State to store the uploaded file
   const [file, setFile] = useState(null);
   
@@ -198,6 +202,14 @@ const page = () => {
     setError(null);
   };
 
+
+//refreshing data --- sending back to dashboard
+  const handleBackToDashboard = () =>{
+    router.push('/dashboard');
+    router.refresh();
+  }
+
+
 //   Helper function to format bytes nicely
   const formatBytes = (bytes) => {
     if (bytes === 0) return '0 Bytes';
@@ -215,6 +227,21 @@ const page = () => {
     <div style={{ padding: '20px' }}>
       <h1>File Upload with Progress</h1>
       
+
+    {/* Handling back to Dashboard */}
+    <button onClick={handleBackToDashboard}
+          style={{
+            padding: '10px 20px',
+            backgroundColor: '#6c757d',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer'
+          }}>
+            ← Back to Dashboard
+          </button>
+
+
     {/* err display */}
          {error && (
         <div style={{

@@ -1,0 +1,107 @@
+-- ============================================
+-- SUPABASE SQL QUERIES FOR PRO USER MANAGEMENT
+-- ============================================
+
+-- 1. UPGRADE A USER TO PRO (by email)
+-- Replace 'user@example.com' with actual email
+UPDATE subscriptions
+SET 
+  plan_type = 'pro',
+  status = 'active',
+  updated_at = NOW()
+WHERE user_id = (
+  SELECT id FROM auth.users WHERE email = 'user@example.com'
+);
+
+-- 2. UPGRADE A USER TO PRO (by user_id)
+-- Replace 'uuid-here' with actual user_id
+UPDATE subscriptions
+SET 
+  plan_type = 'pro',
+  status = 'active',
+  updated_at = NOW()
+WHERE user_id = 'uuid-here';
+
+-- 3. DOWNGRADE A USER TO FREE
+UPDATE subscriptions
+SET 
+  plan_type = 'free',
+  status = 'active',
+  updated_at = NOW()
+WHERE user_id = (
+  SELECT id FROM auth.users WHERE email = 'user@example.com'
+);
+
+-- 4. VIEW ALL PRO USERS
+SELECT 
+  s.user_id,
+  u.email,
+  u.raw_user_meta_data->>'full_name' as full_name,
+  s.plan_type,
+  s.status,
+  s.created_at,
+  s.updated_at
+FROM subscriptions s
+JOIN auth.users u ON s.user_id = u.id
+WHERE s.plan_type = 'pro'
+ORDER BY s.updated_at DESC;
+
+-- 5. VIEW ALL USERS WITH THEIR SUBSCRIPTION STATUS
+SELECT 
+  u.id,
+  u.email,
+  u.raw_user_meta_data->>'full_name' as full_name,
+  u.created_at as user_created,
+  COALESCE(s.plan_type, 'none') as plan,
+  COALESCE(s.status, 'inactive') as status
+FROM auth.users u
+LEFT JOIN subscriptions s ON u.id = s.user_id
+ORDER BY u.created_at DESC;
+
+-- 6. CREATE PRO SUBSCRIPTION FOR USER (if doesn't exist)
+-- This will insert or update
+INSERT INTO subscriptions (user_id, plan_type, status)
+VALUES (
+  (SELECT id FROM auth.users WHERE email = 'user@example.com'),
+  'pro',
+  'active'
+)
+ON CONFLICT (user_id) 
+DO UPDATE SET 
+  plan_type = 'pro',
+  status = 'active',
+  updated_at = NOW();
+
+-- 7. COUNT USERS BY PLAN TYPE
+SELECT 
+  COALESCE(s.plan_type, 'no_subscription') as plan,
+  COUNT(*) as user_count
+FROM auth.users u
+LEFT JOIN subscriptions s ON u.id = s.user_id
+GROUP BY s.plan_type
+ORDER BY user_count DESC;
+
+-- 8. FIND YOUR OWN USER ID (run this logged in)
+SELECT id, email, raw_user_meta_data->>'full_name' as name
+FROM auth.users
+WHERE email = 'your-email@example.com';
+
+-- 9. BATCH UPGRADE MULTIPLE USERS TO PRO
+-- Useful for testing or initial setup
+UPDATE subscriptions
+SET 
+  plan_type = 'pro',
+  status = 'active',
+  updated_at = NOW()
+WHERE user_id IN (
+  SELECT id FROM auth.users 
+  WHERE email IN ('user1@example.com', 'user2@example.com', 'user3@example.com')
+);
+
+-- 10. CHECK IF USER HAS PRO (by email) - Returns true/false
+SELECT 
+  u.email,
+  (s.plan_type = 'pro') as is_pro
+FROM auth.users u
+LEFT JOIN subscriptions s ON u.id = s.user_id
+WHERE u.email = 'user@example.com';

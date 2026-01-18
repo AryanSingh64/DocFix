@@ -7,6 +7,11 @@ import path from 'path';
 import { NextResponse } from 'next/server';
 import os from 'os';
 
+
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
+
+
 const execPromise = promisify(exec); // Convert exec to use async/await
 
 // NEW: Get Ghostscript executable path
@@ -52,6 +57,13 @@ async function isGhostscriptAvailable() {
   console.log('✗ Ghostscript not found in common locations');
   return null;
 }
+
+
+
+
+
+
+
 
 // For App Router (Next.js 13+)
 export async function POST(request) {
