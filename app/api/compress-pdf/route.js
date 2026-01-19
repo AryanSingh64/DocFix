@@ -11,6 +11,8 @@ import os from 'os';
 import { createServerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers';
 
+// Note: Body size limit configured in next.config.mjs (50MB)
+// Our backend enforces 20MB limit for non-premium users
 
 const execPromise = promisify(exec); // Convert exec to use async/await
 
@@ -72,16 +74,6 @@ export async function POST(request) {
     console.log('Received POST request to /api/compress-pdf');
     console.log('Content-Type:', request.headers.get('content-type'));
 
-    // Check if the body has already been consumed
-    // if (request.bodyUsed) {
-    //   console.error('Request body already consumed!');
-    //   return NextResponse.json(
-    //     { error: 'Request body already consumed' },
-    //     { status: 400 }
-    //   );
-    // }
-
-    // Get the uploaded file from FormData
     let formData;
 
     formData = await request.formData();
@@ -112,9 +104,93 @@ export async function POST(request) {
       );
     }
 
-    // Convert file to buffer
+    // Convert file to buffer FIRST (needed for size check)
     const buffer = Buffer.from(await file.arrayBuffer());
     console.log('Original PDF size:', buffer.length, 'bytes');
+
+    // ========== FILE SIZE RESTRICTION (Backend Enforced) ==========
+    // Constants for file size limits
+    const FREE_FILE_SIZE_LIMIT = 20 * 1024 * 1024; // 20MB in bytes
+    const fileSize = buffer.length;
+
+    // Create Supabase client for session check (uses anon key with cookies)
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll()
+          },
+          setAll(cookiesToSet) {
+            // Not setting cookies here
+          }
+        },
+      }
+    );
+
+    // Get current session (may be null for anonymous users)
+    const { data: { session } } = await supabase.auth.getSession();
+    console.log('Session check result:', session?.user?.id || 'No session');
+
+    // Check if user is premium - use session OR fallback user ID
+    let isPremium = false;
+    const userIdToCheck = session?.user?.id || fallbackUserId;
+
+    if (userIdToCheck) {
+      console.log('Checking subscription for user:', userIdToCheck);
+
+      // Use service role key to bypass RLS for subscription check
+      // Import createClient dynamically to avoid issues
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabaseAdmin = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY // Service role key bypasses RLS
+      );
+
+      const { data: subscription, error: subError } = await supabaseAdmin
+        .from('subscriptions')
+        .select('plan_type')
+        .eq('user_id', userIdToCheck)
+        .maybeSingle();
+
+      console.log('Subscription result:', JSON.stringify(subscription, null, 2));
+
+      if (subError) {
+        console.error('Subscription check error:', subError);
+      } else if (subscription) {
+        isPremium = subscription.plan_type === 'pro';
+        console.log('Premium status:', { plan_type: subscription.plan_type, isPremium });
+      } else {
+        console.log('No subscription record found for user');
+      }
+    } else {
+      console.log('Anonymous user - no user ID available, applying free tier limits');
+    }
+
+    // Enforce 20MB limit for non-premium users
+    if (!isPremium && fileSize > FREE_FILE_SIZE_LIMIT) {
+      console.log(`File too large: ${fileSize} bytes (limit: ${FREE_FILE_SIZE_LIMIT})`);
+      return NextResponse.json({
+        error: 'File too large',
+        details: 'Free users can only upload files up to 20MB',
+        hint: 'Upgrade to Premium for unlimited file sizes',
+        currentSize: fileSize,
+        maxSize: FREE_FILE_SIZE_LIMIT
+      }, { status: 413 });
+    }
+    // ========== END FILE SIZE RESTRICTION ==========
+
+    // ========== SCREEN QUALITY RESTRICTION (Premium Only) ==========
+    if (!isPremium && quality === 'screen') {
+      console.log('Non-premium user attempted to use screen quality');
+      return NextResponse.json({
+        error: 'Premium feature',
+        details: 'Screen quality (72 DPI) is a premium-only feature',
+        hint: 'Upgrade to Premium to access the smallest file compression',
+      }, { status: 403 });
+    }
+    // ========== END SCREEN QUALITY RESTRICTION ==========
 
     // Check if Ghostscript is available
     const gsPath = await isGhostscriptAvailable();

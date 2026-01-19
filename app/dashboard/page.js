@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from '@/contexts/AuthContext' //gets user from auth
 import { useRouter } from 'next/navigation' //for redirecting 
 import { supabase } from '@/lib/supabase' //for fetching data
 
@@ -20,12 +20,12 @@ export default function Dashboard() {
   // Redirect to login if not authenticated
   // aka protected route
   useEffect(() => {
-    //chk authentication finish and user is logged in(donechecking, no user found)
     if (!authLoading && !user) {
       //using router to push to /auth if not logged in
       router.push('/auth')
     }
     //this check if any of them changes
+    //like user auth the user and authloading changes so we check that 
   }, [user, authLoading, router])
 
 
@@ -35,13 +35,15 @@ export default function Dashboard() {
     if (user) {
       fetchUserData()
     }
+
+    //if user changed then we check that if it is logged in
   }, [user])
 
   const fetchUserData = async () => {
-    console.log('🔄 fetchUserData called')
+    console.log('fetchUserData called')
     if (!user) return
 
-    console.log('👤 User ID:', user.id)
+    console.log('User ID:', user.id)
     try {
       setLoading(true)
 
@@ -92,8 +94,8 @@ export default function Dashboard() {
         .order('compressed_at', { ascending: false })
         .limit(10)
 
-      console.log('📈 Usage data:', usageData)
-      console.log('❌ Usage error:', usageError)
+      console.log('Usage data:', usageData)
+      console.log('Usage error:', usageError)
       if (usageError) throw usageError
       setUsageHistory(usageData || [])
 
@@ -103,7 +105,7 @@ export default function Dashboard() {
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id)
 
-      console.log('📊 Today usage count:', todayCount)
+      console.log('Today usage count:', todayCount)
       if (countError) {
         console.error('Count error:', countError)
         throw countError
@@ -157,17 +159,25 @@ export default function Dashboard() {
   }
 
   // Show loading while checking auth (spinner show or hide)
-  if (authLoading || loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="text-center">
-          <div className="w-10 h-10 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+if (authLoading || loading) {
+  return (
+    <div className="flex justify-center items-center h-screen bg-gray-100">
+      <div className="text-center">
+        <div className="relative w-16 h-20 mx-auto mb-4">
+          {/* PDF Icon shape */}
+          <div className="absolute inset-0 bg-red-500 rounded-lg animate-pulse"></div>
+          <div className="absolute top-0 right-0 w-4 h-4 bg-red-300 rounded-bl-lg"></div>
+          <span className="absolute inset-0 flex items-center justify-center text-white font-bold text-sm">PDF</span>
+        </div>
+        <div className="flex space-x-1 justify-center">
+          <div className="w-2 h-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+          <div className="w-2 h-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+          <div className="w-2 h-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
         </div>
       </div>
-    )
-  }
-
+    </div>
+  )
+}
   // Don't render anything if no user
   if (!user) {
     return null
@@ -224,7 +234,7 @@ export default function Dashboard() {
         </div>
 
         {/* Usage Card */}
-        <div className="bg-white border-2 border-gray-200 rounded-lg p-5">
+        {/* <div className="bg-white border-2 border-gray-200 rounded-lg p-5">
           <h3 className="text-sm text-gray-600 mb-2">Today's Usage</h3>
           <div className="text-2xl font-bold mb-3">
             {usageCount}{!isPro && ` / ${freeLimit}`}
@@ -244,7 +254,7 @@ export default function Dashboard() {
               </p>
             </>
           )}
-        </div>
+        </div> */}
 
         {/* Total Compressions Card */}
         <div className="bg-white border-2 border-gray-200 rounded-lg p-5">

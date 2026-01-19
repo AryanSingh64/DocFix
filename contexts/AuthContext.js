@@ -12,7 +12,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true)
 
 
-  //use effect run code at specific tiem
+  //use effect run code at specific time
   useEffect(() => {
     // Check active session => destructuring the response(session)
     supabase.auth.getSession().then(({ data: { session } }) => {

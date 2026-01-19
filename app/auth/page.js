@@ -11,7 +11,7 @@ export default function AuthPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  //fron useAuth that we exported in auth context
+  //from useAuth that we exported in auth context
   const { signUp, signIn } = useAuth()
   const router = useRouter()
 
