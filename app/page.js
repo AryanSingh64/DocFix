@@ -1,10 +1,16 @@
 import React from 'react'
 import Link from 'next/link'
+import Navbar from '@/components/Navbar'
+import Hero from '@/components/Hero'
+import ToolsSection from '@/components/ToolsSection'
 const homePage = () => {
   return (
     <>
-      <h1 className='text-red-600' >HomePage</h1>
-      <Link href="/compress-pdf" className='border-2 border-solid p-2'>compress pdf</Link>
+      <div className='bg-[#0F0F0F] h-screen text-white'>
+        <Navbar />
+        <Hero />
+        <ToolsSection />
+      </div>
     </>
   )
 }
