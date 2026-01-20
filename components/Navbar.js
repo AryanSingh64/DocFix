@@ -21,7 +21,7 @@ const Navbar = () => {
                 </Link>
 
                 {/* Navigation Links */}
-                <div className='flex gap-4'>
+                <div className='flex gap-4 text-white'>
                     <Link href="/" className="text-l font-semibold">
                         Home
                     </Link>

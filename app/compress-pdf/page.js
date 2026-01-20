@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
-
+import Navbar from '@/components/Navbar';
 
 const page = () => {
   const router = useRouter();
@@ -40,7 +40,7 @@ const page = () => {
   const [isPremium, setIsPremium] = useState(false);
   const [loadingPremium, setLoadingPremium] = useState(true);
 
-  // NEW: Fetch premium status on mount
+//Fetch premium status on mount
   useEffect(() => {
     const checkPremiumStatus = async () => {
       if (!user) {
@@ -270,16 +270,6 @@ const page = () => {
 
   // ========== STYLES ==========
   const styles = {
-    container: {
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
-      padding: '40px 20px',
-      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-    },
-    innerContainer: {
-      maxWidth: '800px',
-      margin: '0 auto',
-    },
     header: {
       display: 'flex',
       justifyContent: 'space-between',
@@ -535,19 +525,9 @@ const page = () => {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.innerContainer}>
-        {/* Header */}
-        <div style={styles.header}>
-          <h1 style={styles.title}>
-            🗜️ PDF Compressor
-            {isPremium && <span style={styles.premiumBadge}>⭐ PRO</span>}
-          </h1>
-          <button onClick={handleBackToDashboard} style={styles.backButton}>
-            ← Back to Dashboard
-          </button>
-        </div>
-
+    <div className="bg-[#0F0F0F] h-screen text-white">
+      <Navbar />
+      <div className="innerContainer">
         {/* Error Display */}
         {error && (
           <div style={styles.errorBox}>

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext' //gets user from auth
 import { useRouter } from 'next/navigation' //for redirecting 
 import { supabase } from '@/lib/supabase' //for fetching data
-
+import Navbar from '@/components/Navbar'
 export default function Dashboard() {
   //for checking user is signed in
   const { user, loading: authLoading, signOut } = useAuth()
@@ -189,7 +189,8 @@ if (authLoading || loading) {
   const usagePercent = isPro ? 0 : (usageCount / freeLimit) * 100
 
   return (
-    <div className="p-5 max-w-7xl mx-auto">
+    <div className="p-5 max-w-7xl mx-auto bg-neutral-900 text-white">
+   
       {/* Header */}
       {/* shows name, email, and signout */}
       <div className="flex justify-between items-center mb-8 border-b-2 border-gray-200 pb-5">
@@ -197,7 +198,7 @@ if (authLoading || loading) {
           <h1 className="text-3xl font-bold mb-2">
             Welcome back, {user.user_metadata?.full_name || 'User'}! 👋
           </h1>
-          <p className="text-gray-600">{user.email}</p>
+          <p className="text-gray-400">{user.email}</p>
         </div>
         <button
           //router push
@@ -218,12 +219,12 @@ if (authLoading || loading) {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
         {/* Plan Card */}
-        <div className={`${isPro ? 'bg-green-50 border-green-300' : 'bg-yellow-50 border-yellow-300'} border-2 rounded-lg p-5`}>
+        <div className={`${isPro ? 'bg-green-50 border-green-300' : 'bg-yellow-50 border-yellow-300'} border-2 rounded-lg p-5 text-black`}>
           <h3 className="text-sm text-gray-600 mb-2">Current Plan</h3>
           <div className="text-2xl font-bold mb-3">
             {isPro ? '⭐ Pro' : '🆓 Free'}
           </div>
-          {!isPro && (
+          {!isPro && (  
             <button
               onClick={() => router.push('/upgrade')}
               className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition"
@@ -233,28 +234,6 @@ if (authLoading || loading) {
           )}
         </div>
 
-        {/* Usage Card */}
-        {/* <div className="bg-white border-2 border-gray-200 rounded-lg p-5">
-          <h3 className="text-sm text-gray-600 mb-2">Today's Usage</h3>
-          <div className="text-2xl font-bold mb-3">
-            {usageCount}{!isPro && ` / ${freeLimit}`}
-          </div>
-          {!isPro && (
-            <>
-              <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden mt-3">
-                <div
-                  className={`h-full transition-all duration-300 ${usagePercent >= 100 ? 'bg-red-600' : 'bg-blue-600'}`}
-                  style={{ width: `${Math.min(usagePercent, 100)}%` }}
-                ></div>
-              </div>
-              <p className="text-xs text-gray-600 mt-2">
-                {usageCount >= freeLimit
-                  ? 'Limit reached! Upgrade for unlimited.'
-                  : `${freeLimit - usageCount} compressions left today`}
-              </p>
-            </>
-          )}
-        </div> */}
 
         {/* Total Compressions Card */}
         <div className="bg-white border-2 border-gray-200 rounded-lg p-5">
@@ -276,9 +255,9 @@ if (authLoading || loading) {
       </div>
 
       {/* Recent Compressions */}
-      <div>
+      <div className="text-black" >
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold">Recent Compressions</h2>
+          <h2 className="text-2xl text-white font-bold">Recent Compressions</h2>
           <button
             onClick={fetchUserData}
             className="text-sm text-blue-600 hover:text-blue-800 underline"
