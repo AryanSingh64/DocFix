@@ -1,6 +1,6 @@
 "use client"
 import React, { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import Navbar from '@/components/Navbar';
@@ -8,39 +8,19 @@ import Navbar from '@/components/Navbar';
 const page = () => {
   const router = useRouter();
   const { user } = useAuth();
-
-  // State to store the uploaded file
   const [file, setFile] = useState(null);
-
-  // State to track if user is dragging over the drop zone
   const [isDragging, setIsDragging] = useState(false);
-
-  // State to track upload/compression progress (0-100)
   const [progress, setProgress] = useState(0);
-
-  // State to check if upload is in progress
   const [isUploading, setIsUploading] = useState(false);
-
-  // State to check if upload is complete
   const [isComplete, setIsComplete] = useState(false);
-
-  // State to store the compressed PDF blob
   const [compressedFile, setCompressedFile] = useState(null);
-
-  // State to store compression statistics
   const [stats, setStats] = useState(null);
-
-  // State for errors
   const [error, setError] = useState(null);
-
-  // State for selected quality
   const [quality, setQuality] = useState('ebook');
-
-  // NEW: State for premium status
   const [isPremium, setIsPremium] = useState(false);
   const [loadingPremium, setLoadingPremium] = useState(true);
 
-//Fetch premium status on mount
+  //Fetch premium status on mount
   useEffect(() => {
     const checkPremiumStatus = async () => {
       if (!user) {
@@ -50,6 +30,7 @@ const page = () => {
       }
 
       try {
+        //check premium status from subscriptions table
         const { data: subscription } = await supabase
           .from('subscriptions')
           .select('plan_type')
@@ -253,12 +234,6 @@ const page = () => {
     setError(null);
   };
 
-  // Navigate back to dashboard
-  const handleBackToDashboard = () => {
-    router.push('/dashboard');
-    router.refresh();
-  };
-
   // Helper function to format bytes
   const formatBytes = (bytes) => {
     if (bytes === 0) return '0 Bytes';
@@ -268,278 +243,40 @@ const page = () => {
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
   };
 
-  // ========== STYLES ==========
-  const styles = {
-    header: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: '40px',
-    },
-    title: {
-      fontSize: '32px',
-      fontWeight: '700',
-      color: '#ffffff',
-      margin: 0,
-      background: 'linear-gradient(90deg, #00d4ff, #7c3aed)',
-      WebkitBackgroundClip: 'text',
-      WebkitTextFillColor: 'transparent',
-      backgroundClip: 'text',
-    },
-    backButton: {
-      padding: '10px 20px',
-      background: 'rgba(255, 255, 255, 0.1)',
-      color: '#ffffff',
-      border: '1px solid rgba(255, 255, 255, 0.2)',
-      borderRadius: '8px',
-      cursor: 'pointer',
-      fontSize: '14px',
-      transition: 'all 0.3s ease',
-      backdropFilter: 'blur(10px)',
-    },
-    card: {
-      background: 'rgba(255, 255, 255, 0.05)',
-      borderRadius: '16px',
-      padding: '30px',
-      marginBottom: '24px',
-      border: '1px solid rgba(255, 255, 255, 0.1)',
-      backdropFilter: 'blur(10px)',
-    },
-    sectionTitle: {
-      fontSize: '18px',
-      fontWeight: '600',
-      color: '#ffffff',
-      marginBottom: '20px',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '10px',
-    },
-    qualityGrid: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-      gap: '12px',
-    },
-    qualityButton: (isSelected, isLocked) => ({
-      padding: '16px',
-      background: isSelected
-        ? 'linear-gradient(135deg, #7c3aed 0%, #00d4ff 100%)'
-        : isLocked
-          ? 'rgba(255, 255, 255, 0.03)'
-          : 'rgba(255, 255, 255, 0.08)',
-      border: isSelected
-        ? 'none'
-        : isLocked
-          ? '1px dashed rgba(255, 255, 255, 0.2)'
-          : '1px solid rgba(255, 255, 255, 0.15)',
-      borderRadius: '12px',
-      cursor: 'pointer',
-      transition: 'all 0.3s ease',
-      textAlign: 'center',
-      position: 'relative',
-      opacity: isLocked ? 0.7 : 1,
-    }),
-    qualityLabel: (isSelected) => ({
-      fontSize: '14px',
-      fontWeight: '600',
-      color: isSelected ? '#ffffff' : '#e0e0e0',
-      marginBottom: '4px',
-    }),
-    qualityDesc: (isSelected) => ({
-      fontSize: '12px',
-      color: isSelected ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.5)',
-    }),
-    lockBadge: {
-      position: 'absolute',
-      top: '-8px',
-      right: '-8px',
-      background: 'linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)',
-      color: '#ffffff',
-      fontSize: '10px',
-      fontWeight: '700',
-      padding: '4px 8px',
-      borderRadius: '12px',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '4px',
-    },
-    dropZone: (isDragging) => ({
-      border: isDragging ? '2px solid #00d4ff' : '2px dashed rgba(255, 255, 255, 0.3)',
-      borderRadius: '16px',
-      padding: '60px 40px',
-      textAlign: 'center',
-      background: isDragging ? 'rgba(0, 212, 255, 0.1)' : 'rgba(255, 255, 255, 0.02)',
-      transition: 'all 0.3s ease',
-      cursor: 'pointer',
-    }),
-    dropZoneText: {
-      fontSize: '18px',
-      color: 'rgba(255, 255, 255, 0.7)',
-      marginBottom: '16px',
-    },
-    dropZoneHint: {
-      fontSize: '14px',
-      color: 'rgba(255, 255, 255, 0.4)',
-    },
-    fileInput: {
-      display: 'none',
-    },
-    browseButton: {
-      padding: '12px 24px',
-      background: 'linear-gradient(135deg, #7c3aed 0%, #00d4ff 100%)',
-      color: '#ffffff',
-      border: 'none',
-      borderRadius: '8px',
-      cursor: 'pointer',
-      fontSize: '14px',
-      fontWeight: '600',
-      marginTop: '16px',
-    },
-    errorBox: {
-      background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.1) 100%)',
-      border: '1px solid rgba(239, 68, 68, 0.5)',
-      borderRadius: '12px',
-      padding: '20px',
-      marginBottom: '24px',
-    },
-    errorTitle: {
-      color: '#ef4444',
-      fontSize: '16px',
-      fontWeight: '600',
-      marginBottom: '8px',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-    },
-    errorMessage: {
-      color: 'rgba(255, 255, 255, 0.8)',
-      fontSize: '14px',
-      marginBottom: '16px',
-    },
-    upgradeButton: {
-      padding: '12px 24px',
-      background: 'linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)',
-      color: '#ffffff',
-      border: 'none',
-      borderRadius: '8px',
-      cursor: 'pointer',
-      fontSize: '14px',
-      fontWeight: '600',
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: '8px',
-    },
-    closeButton: {
-      background: 'none',
-      border: 'none',
-      color: 'rgba(255, 255, 255, 0.5)',
-      cursor: 'pointer',
-      fontSize: '18px',
-      float: 'right',
-    },
-    progressContainer: {
-      marginTop: '20px',
-    },
-    progressBar: {
-      height: '8px',
-      background: 'rgba(255, 255, 255, 0.1)',
-      borderRadius: '4px',
-      overflow: 'hidden',
-    },
-    progressFill: (progress) => ({
-      height: '100%',
-      width: `${progress}%`,
-      background: 'linear-gradient(90deg, #00d4ff, #7c3aed)',
-      transition: 'width 0.3s ease',
-      borderRadius: '4px',
-    }),
-    progressText: {
-      color: 'rgba(255, 255, 255, 0.7)',
-      fontSize: '14px',
-      marginTop: '8px',
-      textAlign: 'center',
-    },
-    successBox: {
-      background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(34, 197, 94, 0.1) 100%)',
-      border: '1px solid rgba(34, 197, 94, 0.5)',
-      borderRadius: '12px',
-      padding: '24px',
-      textAlign: 'center',
-    },
-    successTitle: {
-      color: '#22c55e',
-      fontSize: '20px',
-      fontWeight: '600',
-      marginBottom: '16px',
-    },
-    statsGrid: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(3, 1fr)',
-      gap: '16px',
-      marginBottom: '20px',
-    },
-    statItem: {
-      textAlign: 'center',
-    },
-    statValue: {
-      color: '#ffffff',
-      fontSize: '18px',
-      fontWeight: '600',
-    },
-    statLabel: {
-      color: 'rgba(255, 255, 255, 0.5)',
-      fontSize: '12px',
-      marginTop: '4px',
-    },
-    downloadButton: {
-      padding: '14px 32px',
-      background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
-      color: '#ffffff',
-      border: 'none',
-      borderRadius: '8px',
-      cursor: 'pointer',
-      fontSize: '16px',
-      fontWeight: '600',
-      marginRight: '12px',
-    },
-    resetButton: {
-      padding: '14px 32px',
-      background: 'rgba(255, 255, 255, 0.1)',
-      color: '#ffffff',
-      border: '1px solid rgba(255, 255, 255, 0.2)',
-      borderRadius: '8px',
-      cursor: 'pointer',
-      fontSize: '16px',
-    },
-    premiumBadge: {
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: '6px',
-      background: 'linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)',
-      color: '#ffffff',
-      fontSize: '12px',
-      fontWeight: '600',
-      padding: '4px 12px',
-      borderRadius: '20px',
-      marginLeft: '12px',
-    },
+  // Quality button styles helper
+  const getQualityButtonClass = (isSelected, isLocked) => {
+    const base = "p-4 rounded-xl cursor-pointer transition-all duration-300 text-center relative";
+    if (isSelected) {
+      return `${base} bg-gradient-to-br from-violet-600 to-cyan-400 border-none`;
+    }
+    if (isLocked) {
+      return `${base} bg-white/[0.03] border border-dashed border-white/20 opacity-70`;
+    }
+    return `${base} bg-white/[0.08] border border-white/15`;
   };
 
   return (
-    <div className="bg-[#0F0F0F] h-screen text-white">
+    <div className="bg-[#0F0F0F] min-h-screen text-white">
       <Navbar />
-      <div className="innerContainer">
+      <div className="max-w-3xl mx-auto p-6">
+
         {/* Error Display */}
         {error && (
-          <div style={styles.errorBox}>
-            <button onClick={() => setError(null)} style={styles.closeButton}>✕</button>
-            <div style={styles.errorTitle}>
+          <div className="bg-gradient-to-br from-red-500/20 to-red-500/10 border border-red-500/50 rounded-xl p-5 mb-6">
+            <button
+              onClick={() => setError(null)}
+              className="bg-transparent border-none text-white/50 cursor-pointer text-lg float-right"
+            >
+              ✕
+            </button>
+            <div className="text-red-500 text-base font-semibold mb-2 flex items-center gap-2">
               ⚠️ {error.type === 'file_too_large'
                 ? 'File Too Large'
                 : error.type === 'premium_feature'
                   ? 'Premium Feature'
                   : 'Compression Failed'}
             </div>
-            <div style={styles.errorMessage}>
+            <div className="text-white/80 text-sm mb-4">
               {error.type === 'file_too_large'
                 ? 'Free users can only upload files up to 20MB. Upgrade to Premium for unlimited file sizes!'
                 : error.type === 'premium_feature'
@@ -548,7 +285,10 @@ const page = () => {
               }
             </div>
             {(error.type === 'file_too_large' || error.type === 'premium_feature') && (
-              <button onClick={() => router.push('/upgrade')} style={styles.upgradeButton}>
+              <button
+                onClick={() => router.push('/upgrade')}
+                className="py-3 px-6 bg-gradient-to-br from-amber-500 to-red-500 text-white border-none rounded-lg cursor-pointer text-sm font-semibold inline-flex items-center gap-2"
+              >
                 ⭐ Upgrade to Premium
               </button>
             )}
@@ -557,48 +297,66 @@ const page = () => {
 
         {/* Quality Selector */}
         {!file && (
-          <div style={styles.card}>
-            <h3 style={styles.sectionTitle}>
+          <div className="bg-white/5 rounded-2xl p-8 mb-6 border border-white/10 backdrop-blur-xl">
+            <h3 className="text-lg font-semibold text-white mb-5 flex items-center gap-2.5">
               🎚️ Compression Quality
             </h3>
-            <div style={styles.qualityGrid}>
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-3">
               {/* Screen - LOCKED for non-premium */}
               <button
                 onClick={() => handleQualitySelect('screen')}
-                style={styles.qualityButton(quality === 'screen', !isPremium)}
+                className={getQualityButtonClass(quality === 'screen', !isPremium)}
               >
                 {!isPremium && (
-                  <span style={styles.lockBadge}>🔒 PRO</span>
+                  <span className="absolute -top-2 -right-2 bg-gradient-to-br from-amber-500 to-red-500 text-white text-[10px] font-bold py-1 px-2 rounded-xl flex items-center gap-1">
+                    🔒 PRO
+                  </span>
                 )}
-                <div style={styles.qualityLabel(quality === 'screen')}>📱 Screen</div>
-                <div style={styles.qualityDesc(quality === 'screen')}>72 DPI • Smallest</div>
+                <div className={`text-sm font-semibold mb-1 ${quality === 'screen' ? 'text-white' : 'text-gray-200'}`}>
+                  📱 Screen
+                </div>
+                <div className={`text-xs ${quality === 'screen' ? 'text-white/80' : 'text-white/50'}`}>
+                  72 DPI • Smallest
+                </div>
               </button>
 
               {/* eBook - Available to all */}
               <button
                 onClick={() => handleQualitySelect('ebook')}
-                style={styles.qualityButton(quality === 'ebook', false)}
+                className={getQualityButtonClass(quality === 'ebook', false)}
               >
-                <div style={styles.qualityLabel(quality === 'ebook')}>📖 eBook</div>
-                <div style={styles.qualityDesc(quality === 'ebook')}>150 DPI • Balanced</div>
+                <div className={`text-sm font-semibold mb-1 ${quality === 'ebook' ? 'text-white' : 'text-gray-200'}`}>
+                  📖 eBook
+                </div>
+                <div className={`text-xs ${quality === 'ebook' ? 'text-white/80' : 'text-white/50'}`}>
+                  150 DPI • Balanced
+                </div>
               </button>
 
               {/* Printer - Available to all */}
               <button
                 onClick={() => handleQualitySelect('printer')}
-                style={styles.qualityButton(quality === 'printer', false)}
+                className={getQualityButtonClass(quality === 'printer', false)}
               >
-                <div style={styles.qualityLabel(quality === 'printer')}>🖨️ Printer</div>
-                <div style={styles.qualityDesc(quality === 'printer')}>300 DPI • High</div>
+                <div className={`text-sm font-semibold mb-1 ${quality === 'printer' ? 'text-white' : 'text-gray-200'}`}>
+                  🖨️ Printer
+                </div>
+                <div className={`text-xs ${quality === 'printer' ? 'text-white/80' : 'text-white/50'}`}>
+                  300 DPI • High
+                </div>
               </button>
 
               {/* Prepress - Available to all */}
               <button
                 onClick={() => handleQualitySelect('prepress')}
-                style={styles.qualityButton(quality === 'prepress', false)}
+                className={getQualityButtonClass(quality === 'prepress', false)}
               >
-                <div style={styles.qualityLabel(quality === 'prepress')}>📄 Prepress</div>
-                <div style={styles.qualityDesc(quality === 'prepress')}>300 DPI • Print-ready</div>
+                <div className={`text-sm font-semibold mb-1 ${quality === 'prepress' ? 'text-white' : 'text-gray-200'}`}>
+                  📄 Prepress
+                </div>
+                <div className={`text-xs ${quality === 'prepress' ? 'text-white/80' : 'text-white/50'}`}>
+                  300 DPI • Print-ready
+                </div>
               </button>
             </div>
           </div>
@@ -606,19 +364,23 @@ const page = () => {
 
         {/* Drop Zone */}
         {!file && (
-          <div style={styles.card}>
+          <div className="bg-white/5 rounded-2xl p-8 mb-6 border border-white/10 backdrop-blur-xl">
             <div
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               onClick={() => document.getElementById('fileInput').click()}
-              style={styles.dropZone(isDragging)}
+              className={`rounded-2xl py-16 px-10 text-center cursor-pointer transition-all duration-300
+                ${isDragging
+                  ? 'border-2 border-solid border-cyan-400 bg-cyan-400/10'
+                  : 'border-2 border-dashed border-white/30 bg-white/[0.02]'
+                }`}
             >
-              <div style={{ fontSize: '48px', marginBottom: '16px' }}>📄</div>
-              <p style={styles.dropZoneText}>
+              <div className="text-5xl mb-4">📄</div>
+              <p className="text-lg text-white/70 mb-4">
                 Drag & drop your PDF here
               </p>
-              <p style={styles.dropZoneHint}>
+              <p className="text-sm text-white/40">
                 or click to browse • {isPremium ? 'Unlimited file size' : 'Max 20MB for free users'}
               </p>
               <input
@@ -626,7 +388,7 @@ const page = () => {
                 onChange={handleFileInput}
                 id="fileInput"
                 accept='application/pdf'
-                style={styles.fileInput}
+                className="hidden"
               />
             </div>
           </div>
@@ -634,39 +396,56 @@ const page = () => {
 
         {/* Processing / Results */}
         {file && (
-          <div style={styles.card}>
+          <div className="bg-white/5 rounded-2xl p-8 mb-6 border border-white/10 backdrop-blur-xl">
             {isUploading && (
-              <div style={styles.progressContainer}>
-                <div style={styles.progressBar}>
-                  <div style={styles.progressFill(progress)}></div>
+              <div className="mt-5">
+                <div className="h-2 bg-white/10 rounded overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-cyan-400 to-violet-600 rounded transition-all duration-300"
+                    style={{ width: `${progress}%` }}
+                  ></div>
                 </div>
-                <p style={styles.progressText}>
+                <p className="text-white/70 text-sm mt-2 text-center">
                   {progress < 50 ? '📤 Uploading...' : '⚙️ Compressing...'} {progress}%
                 </p>
               </div>
             )}
 
             {isComplete && stats && (
-              <div style={styles.successBox}>
-                <div style={styles.successTitle}>✅ Compression Complete!</div>
-                <div style={styles.statsGrid}>
-                  <div style={styles.statItem}>
-                    <div style={styles.statValue}>{formatBytes(stats.originalSize)}</div>
-                    <div style={styles.statLabel}>Original</div>
+              <div className="bg-gradient-to-br from-green-500/20 to-green-500/10 border border-green-500/50 rounded-xl p-6 text-center">
+                <div className="text-green-500 text-xl font-semibold mb-4">
+                  ✅ Compression Complete!
+                </div>
+                <div className="grid grid-cols-3 gap-4 mb-5">
+                  <div className="text-center">
+                    <div className="text-white text-lg font-semibold">
+                      {formatBytes(stats.originalSize)}
+                    </div>
+                    <div className="text-white/50 text-xs mt-1">Original</div>
                   </div>
-                  <div style={styles.statItem}>
-                    <div style={styles.statValue}>{formatBytes(stats.compressedSize)}</div>
-                    <div style={styles.statLabel}>Compressed</div>
+                  <div className="text-center">
+                    <div className="text-white text-lg font-semibold">
+                      {formatBytes(stats.compressedSize)}
+                    </div>
+                    <div className="text-white/50 text-xs mt-1">Compressed</div>
                   </div>
-                  <div style={styles.statItem}>
-                    <div style={styles.statValue}>{stats.compressionRatio}%</div>
-                    <div style={styles.statLabel}>Saved</div>
+                  <div className="text-center">
+                    <div className="text-white text-lg font-semibold">
+                      {stats.compressionRatio}%
+                    </div>
+                    <div className="text-white/50 text-xs mt-1">Saved</div>
                   </div>
                 </div>
-                <button onClick={handleDownload} style={styles.downloadButton}>
+                <button
+                  onClick={handleDownload}
+                  className="py-3.5 px-8 bg-gradient-to-br from-green-500 to-green-600 text-white border-none rounded-lg cursor-pointer text-base font-semibold mr-3"
+                >
                   ⬇️ Download Compressed PDF
                 </button>
-                <button onClick={handleReset} style={styles.resetButton}>
+                <button
+                  onClick={handleReset}
+                  className="py-3.5 px-8 bg-white/10 text-white border border-white/20 rounded-lg cursor-pointer text-base"
+                >
                   🔄 Compress Another
                 </button>
               </div>

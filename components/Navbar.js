@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext'
 const Navbar = () => {
     const { user, loading } = useAuth()
 
+    
     return (
         <motion.nav className=""
             initial={{ opacity: 0, y: -20 }}
@@ -20,7 +21,6 @@ const Navbar = () => {
                     DocFix
                 </Link>
 
-                {/* Navigation Links */}
                 <div className='flex gap-4 text-white'>
                     <Link href="/" className="text-l font-semibold">
                         Home
@@ -28,22 +28,19 @@ const Navbar = () => {
                     <Link href="/compress-pdf" className="text-l font-semibold">
                         Compress PDF
                     </Link>
-                    {/* {user && (
-                        <Link href="/dashboard" className="text-l font-semibold">
-                            Dashboard
-                        </Link>
-                    )} */}
                 </div>
 
-                {/* Auth Buttons - Show Dashboard if logged in, Sign Up if not */}
                 <div className="flex items-center gap-2">
+
                     {loading ? (
                         <div className="w-20 h-9 bg-gray-700 rounded animate-pulse"></div>
                     ) : user ? (
+                        //if user yes 
                         <Button asChild className='bg-blue-600 text-white hover:bg-blue-700 active:scale-95'>
                             <Link href="/dashboard">Dashboard</Link>
                         </Button>
                     ) : (
+                        //if user no
                         <Button asChild className='bg-white text-black hover:bg-gray-200 active:scale-95'>
                             <Link href="/auth">Sign Up</Link>
                         </Button>

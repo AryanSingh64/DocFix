@@ -1,13 +1,10 @@
-// Import createServerClient: Creates a Supabase client optimized for Next.js server-side usage
+//Creates a Supabase client optimized for Next.js server-side usage
 import { createServerClient } from '@supabase/auth-helpers-nextjs'
-// Import NextResponse: Used to create and modify HTTP responses in middleware
+//Used to create and modify HTTP responses in middleware
 import { NextResponse } from 'next/server'
 
-// MIDDLEWARE FUNCTION
-// This function runs BEFORE any page loads (intercepts all requests)
 // 'request' parameter: contains all information about the incoming HTTP request
 export async function middleware(request) {
-//like we are going to /dashboard so it says middleware running for /dashboard
     console.log('🔥 Middleware running for:', request.nextUrl.pathname)
 
     // STEP 1: Create initial response that says "proceed to next step"
@@ -26,9 +23,9 @@ export async function middleware(request) {
         {
             // COOKIE HANDLING: Supabase needs to read/write cookies to manage auth tokens
             cookies: {
-                // getAll(): Provides a way for Supabase to READ all cookies from the request
-                // This allows Supabase to find existing auth tokens
+
                 getAll() {
+                    //read all cookies from the request
                     return request.cookies.getAll()
                 },
 
@@ -48,7 +45,6 @@ export async function middleware(request) {
 
                     // SECOND LOOP: Set cookies on the RESPONSE object
                     // This ensures the browser receives the updated cookies
-                    // 'options' includes settings like expiration, httpOnly, secure, etc.
                     cookiesToSet.forEach(({ name, value, options }) =>
                         response.cookies.set(name, value, options)
                     )
@@ -58,12 +54,25 @@ export async function middleware(request) {
     )
 
     // STEP 3: Check if user has an active session (are they logged in?)
-    // Destructuring: extracts 'session' from the nested response object
     const { data: { session } } = await supabase.auth.getSession()
 
-    // Log whether a session was found
-    // !!session: converts session to boolean (true if exists, false if null/undefined)
-    console.log('🔥 Middleware session found:', !!session)
+    //!! t or f
+    console.log('Middleware session found:', !!session)
+
+
+    // Redirect logged-in users away from auth pages
+    if (request.nextUrl.pathname.startsWith('/auth')) {
+        if (session) {
+            console.log("Authenticated user accessing auth page, redirecting to dashboard");
+            return NextResponse.redirect(new URL('/dashboard', request.url))
+        }
+    }
+
+    //protection for routes - redirect to auth if NOT logged in
+    if (request.nextUrl.pathname.startsWith('/dashboard') && !session) {
+        console.log("dashboard access attempted without session, redirecting to login");
+        return NextResponse.redirect(new URL('/auth', request.url))
+    }
 
     // STEP 4: Return the response, allowing the request to proceed
     // By now, auth cookies have been refreshed if needed

@@ -19,14 +19,14 @@ export default function Dashboard() {
 
   // Redirect to login if not authenticated
   // aka protected route
-  useEffect(() => {
-    if (!authLoading && !user) {
-      //using router to push to /auth if not logged in
-      router.push('/auth')
-    }
-    //this check if any of them changes
-    //like user auth the user and authloading changes so we check that 
-  }, [user, authLoading, router])
+  // useEffect(() => {
+  //   if (!authLoading && !user) {
+  //     //using router to push to /auth if not logged in
+  //     router.push('/auth')
+  //   }
+  //   //this check if any of them changes
+  //   //like user auth the user and authloading changes so we check that 
+  // }, [user, authLoading, router])
 
 
   // Fetch user's data when component loads from db
@@ -159,25 +159,25 @@ export default function Dashboard() {
   }
 
   // Show loading while checking auth (spinner show or hide)
-if (authLoading || loading) {
-  return (
-    <div className="flex justify-center items-center h-screen bg-gray-100">
-      <div className="text-center">
-        <div className="relative w-16 h-20 mx-auto mb-4">
-          {/* PDF Icon shape */}
-          <div className="absolute inset-0 bg-red-500 rounded-lg animate-pulse"></div>
-          <div className="absolute top-0 right-0 w-4 h-4 bg-red-300 rounded-bl-lg"></div>
-          <span className="absolute inset-0 flex items-center justify-center text-white font-bold text-sm">PDF</span>
-        </div>
-        <div className="flex space-x-1 justify-center">
-          <div className="w-2 h-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-          <div className="w-2 h-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-          <div className="w-2 h-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+  if (authLoading || loading) {
+    return (
+      <div className="flex justify-center items-center h-screen bg-gray-100">
+        <div className="text-center">
+          <div className="relative w-16 h-20 mx-auto mb-4">
+            {/* PDF Icon shape */}
+            <div className="absolute inset-0 bg-red-500 rounded-lg animate-pulse"></div>
+            <div className="absolute top-0 right-0 w-4 h-4 bg-red-300 rounded-bl-lg"></div>
+            <span className="absolute inset-0 flex items-center justify-center text-white font-bold text-sm">PDF</span>
+          </div>
+          <div className="flex space-x-1 justify-center">
+            <div className="w-2 h-2 bg-red-500 rounded-full animate-bounce [animation-delay:0ms]"></div>
+            <div className="w-2 h-2 bg-red-500 rounded-full animate-bounce [animation-delay:150ms]"></div>
+            <div className="w-2 h-2 bg-red-500 rounded-full animate-bounce [animation-delay:300ms]"></div>
+          </div>
         </div>
       </div>
-    </div>
-  )
-}
+    )
+  }
   // Don't render anything if no user
   if (!user) {
     return null
@@ -190,7 +190,7 @@ if (authLoading || loading) {
 
   return (
     <div className="p-5 max-w-7xl mx-auto bg-neutral-900 text-white">
-   
+
       {/* Header */}
       {/* shows name, email, and signout */}
       <div className="flex justify-between items-center mb-8 border-b-2 border-gray-200 pb-5">
@@ -224,7 +224,7 @@ if (authLoading || loading) {
           <div className="text-2xl font-bold mb-3">
             {isPro ? '⭐ Pro' : '🆓 Free'}
           </div>
-          {!isPro && (  
+          {!isPro && (
             <button
               onClick={() => router.push('/upgrade')}
               className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition"

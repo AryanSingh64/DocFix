@@ -6,17 +6,17 @@ import { supabase } from '@/lib/supabase'
 const AuthContext = createContext({})
 
 export const AuthProvider = ({ children }) => {
-  //sores current logged in user (id:123, email:'22@gmail.com')
+  //swho is logged in?
   const [user, setUser] = useState(null)
-  // while loading if user is logged in show loading
+  //are we still checking?
   const [loading, setLoading] = useState(true)
-
+//now user = null and loading = true
 
   //use effect run code at specific time
   useEffect(() => {
-    // Check active session => destructuring the response(session)
+    // chk if user is logged in- ask supabase is there any session?
     supabase.auth.getSession().then(({ data: { session } }) => {
-      //if session exist get user from it
+      //if session exist get user from it else null
       setUser(session?.user ?? null)
       //its loaded so set laoding == false
       setLoading(false)
@@ -25,6 +25,12 @@ export const AuthProvider = ({ children }) => {
     // Listen for auth changes - watch login logout
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
+        //runs when 
+        /*
+        -user logs in
+        -user logs out
+        -token refreshes
+         */
         setUser(session?.user ?? null)
       }
     )
@@ -49,7 +55,7 @@ export const AuthProvider = ({ children }) => {
         data: { full_name: fullName }
       }
     })
-    return { data, error }
+    return { data, error }  //return data and error to the one who calls it
   }
 
 

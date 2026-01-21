@@ -24,7 +24,7 @@ export default function AuthPage() {
       if (isSignUp) {
         //await - wait for the data =>
         const { error } = await signUp(email, password, fullName)
-        if (error) throw error //if err catch it
+        if (error) throw error //if err jump to catch block
         alert('Check your email to confirm your account!') //runs if no err
       } else {
         const { error } = await signIn(email, password)

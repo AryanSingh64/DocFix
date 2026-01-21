@@ -105,3 +105,18 @@ SELECT
 FROM auth.users u
 LEFT JOIN subscriptions s ON u.id = s.user_id
 WHERE u.email = 'user@example.com';
+
+
+
+
+
+CREATE TABLE IF NOT EXISTS profiles (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    is_premium BOOLEAN DEFAULT FALSE,
+    stripe_subscription_id TEXT,
+    premium_since TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can read own profile" ON profiles
+    FOR SELECT USING (auth.uid() = id);
