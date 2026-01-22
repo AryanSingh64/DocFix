@@ -3,9 +3,10 @@ import { NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
-
 export async function POST(request) {
+    // Initialize Stripe inside the function (runtime) instead of top-level (build time)
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+
     try {
         // Get current user from session
         const cookieStore = await cookies()
