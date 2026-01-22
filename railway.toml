@@ -2,6 +2,7 @@
 builder = "nixpacks"
 
 [build.nixpacksPlan.phases.setup]
+nixPkgs = ["nodejs_20"]
 aptPkgs = ["ghostscript"]
 
 [deploy]
