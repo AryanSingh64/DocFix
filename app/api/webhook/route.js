@@ -34,13 +34,24 @@ export async function POST(request) {
     switch (event.type) {
         case 'checkout.session.completed': {
             const session = event.data.object
-            const userId = session.metadata.userId
+            const userId = session.metadata?.userId
             const subscriptionId = session.subscription
 
-            console.log('Payment successful for user:', userId)
+            console.log('=== CHECKOUT SESSION COMPLETED ===')
+            console.log('Session ID:', session.id)
+            console.log('User ID from metadata:', userId)
+            console.log('Subscription ID:', subscriptionId)
+            console.log('Full metadata:', JSON.stringify(session.metadata))
+
+            if (!userId) {
+                console.error('ERROR: No userId in session metadata!')
+                break
+            }
+
+            console.log('Attempting to update subscription for user:', userId)
 
             // Update plan_type to 'pro' in subscriptions table
-            const { error } = await supabaseAdmin
+            const { data: updateData, error } = await supabaseAdmin
                 .from('subscriptions')
                 .update({
                     plan_type: 'pro',
@@ -48,24 +59,45 @@ export async function POST(request) {
                     updated_at: new Date().toISOString()
                 })
                 .eq('user_id', userId)
+                .select()
+
+            console.log('Update result:', { data: updateData, error })
 
             if (error) {
                 console.error('Error updating subscription:', error)
 
                 // If no row exists, try inserting
-                const { error: insertError } = await supabaseAdmin
+                console.log('Trying to insert new subscription row...')
+                const { data: insertData, error: insertError } = await supabaseAdmin
                     .from('subscriptions')
                     .insert({
                         user_id: userId,
                         plan_type: 'pro',
                         stripe_subscription_id: subscriptionId
                     })
+                    .select()
+
+                console.log('Insert result:', { data: insertData, error: insertError })
 
                 if (insertError) {
                     console.error('Error inserting subscription:', insertError)
+                } else {
+                    console.log('Successfully INSERTED user as pro!')
                 }
+            } else if (!updateData || updateData.length === 0) {
+                console.log('No rows updated, trying insert...')
+                const { data: insertData, error: insertError } = await supabaseAdmin
+                    .from('subscriptions')
+                    .insert({
+                        user_id: userId,
+                        plan_type: 'pro',
+                        stripe_subscription_id: subscriptionId
+                    })
+                    .select()
+
+                console.log('Insert result:', { data: insertData, error: insertError })
             } else {
-                console.log('Successfully updated user to pro!')
+                console.log('Successfully UPDATED user to pro!')
             }
             break
         }
