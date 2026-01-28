@@ -29,17 +29,25 @@ export async function POST(request) {
 
         if (apiKey) {
             const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
+        //lets get that tone
+        const tone = formData.get('tone');
+        console.log(tone);
+        const toneInstruction = {
+              professional: "Use a formal, professional tone. Be precise, structured, and use business language. Focus on facts and key metrics.",
+              balanced: "Use a balanced, clear tone. Be informative yet approachable. Include key points without being too formal or too casual.",
+              casual: "Use a friendly, conversational tone. Explain things simply as if talking to a friend. Make it easy to understand."
+        };
             const prompt = `
-        You are an expert document summarizer. 
-        Please provide a concise and structured summary of the following text.
-        Highlight the key points and main takeaways.
+         You are an expert document summarizer.
+         ${toneInstruction[tone]}
         
-        Text to summarize:
+        Summarize the following document:
         ${text}
         `;
 
+        console.log(toneInstruction[tone]);
             const result = await model.generateContent(prompt);
             const response = await result.response;
             const summary = response.text();

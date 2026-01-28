@@ -1,23 +1,24 @@
 "use client"
 import React, { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import Navbar from '@/components/Navbar';
+import DropZone from '@/components/DropZone';
 
 const page = () => {
   const router = useRouter();
   const { user } = useAuth();
   const [file, setFile] = useState(null);
+
+
   const [summary,setSummary] = useState(null);
-  const [isDragging, setIsDragging] = useState(false);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false); 
+  const [tone,setTone] = useState('balanced');
   const [progress, setProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
-  const [compressedFile, setCompressedFile] = useState(null);
-  const [stats, setStats] = useState(null);
-  const [error, setError] = useState(null);
-//   const [quality, setQuality] = useState('ebook');
   const [isPremium, setIsPremium] = useState(false);
   const [loadingPremium, setLoadingPremium] = useState(true);
 
@@ -52,61 +53,12 @@ const page = () => {
 
 
 
-//   // Handle quality selection - redirect to upgrade if locked
-//   const handleQualitySelect = (selectedQuality) => {
-//     // Screen quality is locked for non-premium users
-//     if (selectedQuality === 'screen' && !isPremium) {
-//       router.push('/upgrade');
-//       return;
-//     }
-//     setQuality(selectedQuality);
-//   };
 
 
 
-  // Prevent default behavior when dragging over
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  // Reset dragging state when drag leaves
-  const handleDragLeave = (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
-
-  // Handle file drop
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-
-    const droppedFile = e.dataTransfer.files[0];
-    if (droppedFile) {
-      if (droppedFile.type == 'application/pdf') {
-        processFile(droppedFile);
-      } else {
-        setError('Please upload a PDF file only');
-      }
-    }
-  };
-
-  // Handle file selection via input
-  const handleFileInput = (e) => {
-    const selectedFile = e.target.files[0];
-    if (selectedFile) {
-      if (selectedFile.type === 'application/pdf') {
-        processFile(selectedFile);
-      } else {
-        setError('Please upload a PDF file only');
-      }
-    }
-  };
 
   // Process the file
   const processFile = async (selectedFile) => {
-    // ========== CLIENT-SIDE FILE SIZE CHECK ==========
-    // Check file size BEFORE uploading to avoid server parsing errors
     const FREE_FILE_SIZE_LIMIT = 20 * 1024 * 1024; // 20MB
 
     if (!isPremium && selectedFile.size > FREE_FILE_SIZE_LIMIT) {
@@ -117,20 +69,17 @@ const page = () => {
       });
       return; // Don't try to upload
     }
-    // ========== END FILE SIZE CHECK ==========
 
     setFile(selectedFile);
     setIsUploading(true);
     setProgress(0);
     setIsComplete(false);
     setError(null);
-    setCompressedFile(null);
-    setStats(null);
 
     try {
       const formData = new FormData();
       formData.append('pdf', selectedFile);
-    //   formData.append('quality', quality);
+      formData.append('tone', tone); //sending to backend
 
       if (user?.id) {
         formData.append('user_id', user.id);
@@ -139,88 +88,63 @@ const page = () => {
       setProgress(10);
       console.log('Sending PDF to backend...');
 
+
+      setLoading(true);
+      setError(null);
+
+
       const response = await fetch('/api/summarise-pdf', {
         method: 'POST',
-        body: formData,
+        body: formData, //pdf data
       });
 
       setProgress(50);
 
+      const data = await response.json();
+
       if (!response.ok) {
-        let errorData;
-        try {
-          errorData = await response.json();
-        } catch {
-          errorData = { error: 'Server error', details: 'Failed to process request' };
-        }
+        console.log('Backend error:', response.status,data);
+          
+  setFile(null);
+  setIsUploading(false);
+  setProgress(0);
+  setLoading(false);
 
-        console.log('Backend error:', response.status, errorData);
-
-        // Reset file state so UI shows quality selector and drop zone again
-        setFile(null);
-        setIsUploading(false);
-        setProgress(0);
 
         // Handle different error codes
         if (response.status === 413) {
           setError({
             type: 'file_too_large',
-            message: errorData.details || 'File exceeds 20MB limit',
-            hint: errorData.hint
+            message: data.error || 'File exceeds 20MB limit',
+            hint: data.hint
           });
         } else {
           setError({
             type: 'generic',
-            message: errorData.details || errorData.error || 'Compression failed'
+            message: data.error || 'Failed to generate summary'
           });
         }
         return;
       }
 
-    //   const originalSize = parseInt(response.headers.get('X-Original-Size'));
-    //   const compressedSize = parseInt(response.headers.get('X-Compressed-Size'));
-    //   const compressionRatio = response.headers.get('X-Compression-Ratio');
-
       setProgress(80);
 
-    //   const blob = await response.blob();
-    //   setCompressedFile(blob);
-
-    //   setStats({
-    //     originalSize,
-    //     compressedSize,
-    //     compressionRatio,
-    //     savedBytes: originalSize - compressedSize
-    //   });
+      setSummary(data.summary);
+      setLoading(false);
 
       setProgress(100);
       setIsUploading(false);
       setIsComplete(true);
 
     } catch (err) {
-      console.error('Compression error:', err);
+      console.error('Summary error:', err);
       // Reset file state so UI shows quality selector and drop zone again
       setFile(null);
-      setError({ type: 'generic', message: err.message || 'Failed to compress PDF. Please try again.' });
+      setError({ type: 'generic', message: err.message || 'Failed to generate summary. Please try again.' });
       setIsUploading(false);
       setProgress(0);
     }
   };
-
-  // Download the file
-//   const handleDownload = () => {
-//     if (compressedFile) {
-//       const url = URL.createObjectURL(compressedFile);
-//       const nameWithoutExt = file.name.replace('.pdf', '');
-//       const a = document.createElement('a');
-//       a.href = url;
-//       a.download = `${nameWithoutExt}-${quality}-compressed.pdf`;
-//       document.body.appendChild(a);
-//       a.click();
-//       document.body.removeChild(a);
-//       URL.revokeObjectURL(url);
-//     }
-//   };
 
   // Reset everything
   const handleReset = () => {
@@ -228,41 +152,53 @@ const page = () => {
     setProgress(0);
     setIsUploading(false);
     setIsComplete(false);
-    setCompressedFile(null);
-    setStats(null);
     setError(null);
   };
 
-  // Helper function to format bytes
-  const formatBytes = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-  };
 
-  // Quality button styles helper
-//   const getQualityButtonClass = (isSelected, isLocked) => {
-//     const base = "p-4 rounded-xl cursor-pointer transition-all duration-300 text-center relative";
-//     if (isSelected) {
-//       return `${base} bg-gradient-to-br from-violet-600 to-cyan-400 border-none`;
-//     }
-//     if (isLocked) {
-//       return `${base} bg-white/[0.03] border border-dashed border-white/20 opacity-70`;
-//     }
-//     return `${base} bg-white/[0.08] border border-white/15`;
-//   };
+  const colorMap = {
+  professional: "bg-red-500 text-white",
+  balanced: "bg-green-500 text-white",
+  casual: "bg-blue-500 text-white"
+};
+
 
   return (
     <div className="bg-[#0F0F0F] min-h-screen text-white">
       <Navbar />
       
+      {/* Tone Selector */}
+
+
+      
+      <div className="flex gap-3 mb-6 justify-center">
+        {['professional', 'balanced', 'casual'].map((t) => (
+          <button
+            key={t}
+            onClick={() => setTone(t)}
+            className={`px-4 py-2 rounded-lg capitalize       transition-all 
+              ${
+              tone === t
+                ? colorMap[t]
+                : 'bg-white/10 text-white/70 hover:bg-white/20'
+            }`}
+          >
+            {t === 'professional' ? 'Professional' : 
+             t === 'balanced' ? 'Balanced' : 'Casual'}
+          </button>
+        ))}
+      </div>
+
+
+
+
+
+
         {summary && (
   <div className="bg-white/10 p-6 rounded-xl mt-6">
     <h3 className="text-xl font-bold mb-4">✨ Summary</h3>
     <div className="prose prose-invert">
-      <ReactMarkdown>{summary}</ReactMarkdown>
+      <p className="whitespace-pre-wrap">{summary}</p>
     </div>
     <button onClick={() => navigator.clipboard.writeText(summary)}>
       Copy to Clipboard
@@ -285,7 +221,7 @@ const page = () => {
                 ? 'File Too Large'
                 : error.type === 'premium_feature'
                   ? 'Premium Feature'
-                  : 'Compression Failed'}
+                  : 'Summary Failed'}
             </div>
             <div className="text-white/80 text-sm mb-4">
               {error.type === 'file_too_large'
@@ -309,93 +245,11 @@ const page = () => {
 
         {/* Drop Zone */}
         {!file && (
-          <div className="bg-white/5 rounded-2xl p-8 mb-6 border border-white/10 backdrop-blur-xl">
-            <div
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              onClick={() => document.getElementById('fileInput').click()}
-              className={`rounded-2xl py-16 px-10 text-center cursor-pointer transition-all duration-300
-                ${isDragging
-                  ? 'border-2 border-solid border-cyan-400 bg-cyan-400/10'
-                  : 'border-2 border-dashed border-white/30 bg-white/[0.02]'
-                }`}
-            >
-              <div className="text-5xl mb-4">📄</div>
-              <p className="text-lg text-white/70 mb-4">
-                Drag & drop your PDF here
-              </p>
-              <p className="text-sm text-white/40">
-                or click to browse • {isPremium ? 'Unlimited file size' : 'Max 20MB for free users'}
-              </p>
-              <input
-                type="file"
-                onChange={handleFileInput}
-                id="fileInput"
-                accept='application/pdf'
-                className="hidden"
-              />
-            </div>
-          </div>
-        )}
+  <DropZone 
+    onFileSelect={processFile} 
+    maxSizeText={isPremium ? 'Unlimited file size' : 'Max 20MB for free users'}
 
-        {/* Processing / Results */}
-        {file && (
-          <div className="bg-white/5 rounded-2xl p-8 mb-6 border border-white/10 backdrop-blur-xl">
-            {isUploading && (
-              <div className="mt-5">
-                <div className="h-2 bg-white/10 rounded overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-cyan-400 to-violet-600 rounded transition-all duration-300"
-                    style={{ width: `${progress}%` }}
-                  ></div>
-                </div>
-                <p className="text-white/70 text-sm mt-2 text-center">
-                  {progress < 50 ? '📤 Uploading...' : '⚙️ Compressing...'} {progress}%
-                </p>
-              </div>
-            )}
-
-            {isComplete && stats && (
-              <div className="bg-gradient-to-br from-green-500/20 to-green-500/10 border border-green-500/50 rounded-xl p-6 text-center">
-                <div className="text-green-500 text-xl font-semibold mb-4">
-                  Compression Complete!
-                </div>
-                <div className="grid grid-cols-3 gap-4 mb-5">
-                  <div className="text-center">
-                    <div className="text-white text-lg font-semibold">
-                      {formatBytes(stats.originalSize)}
-                    </div>
-                    <div className="text-white/50 text-xs mt-1">Original</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-white text-lg font-semibold">
-                      {formatBytes(stats.compressedSize)}
-                    </div>
-                    <div className="text-white/50 text-xs mt-1">Compressed</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-white text-lg font-semibold">
-                      {stats.compressionRatio}%
-                    </div>
-                    <div className="text-white/50 text-xs mt-1">Saved</div>
-                  </div>
-                </div>
-                <button
-                  onClick={handleDownload}
-                  className="py-3.5 px-8 bg-gradient-to-br from-green-500 to-green-600 text-white border-none rounded-lg cursor-pointer text-base font-semibold mr-3"
-                >
-                  Download Compressed PDF
-                </button>
-                <button
-                  onClick={handleReset}
-                  className="py-3.5 px-8 bg-white/10 text-white border border-white/20 rounded-lg cursor-pointer text-base"
-                >
-                  🔄 Compress Another
-                </button>
-              </div>
-            )}
-          </div>
+        />
         )}
 
 

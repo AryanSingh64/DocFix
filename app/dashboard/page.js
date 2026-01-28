@@ -178,20 +178,19 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-[#13111a] flex">
-      {/* Sidebar */}
       <Sidebar
         onSignOut={handleSignOut}
         userName={user.user_metadata?.full_name}
         userEmail={user.email}
         mascotId={mascotId}
-        isDarkMode={isDarkMode}
-        onToggleDarkMode={toggleDarkMode}
+        // isDarkMode={isDarkMode}
+        // onToggleDarkMode={toggleDarkMode}
       />
 
       {/* Main Content */}
       <main className="flex-1 ml-0 lg:ml-64 p-4 sm:p-6 lg:p-8 pt-20 lg:pt-8">
         {/* Top Header */}
-        <div className="flex items-center justify-end mb-8">
+        <div className="flex items-center justify-end">
 
           {/* Right Actions */}
           <div className="flex items-center gap-4">
@@ -228,8 +227,8 @@ export default function Dashboard() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="text-3xl font-bold text-white mb-2">
-            Welcome back, {user.user_metadata?.full_name || 'User'}! 👋
+          <h1 className="text-3xl font-bold text-white mb-1">
+            Welcome back, {user.user_metadata?.full_name || 'User'}!
           </h1>
           <p className="text-gray-400">{user.email}</p>
         </motion.div>
@@ -257,7 +256,7 @@ export default function Dashboard() {
             onClick={() => router.push('/compress-pdf')}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="p-6 bg-gradient-to-br from-purple-600/20 to-pink-600/10 border border-purple-500/20 rounded-2xl text-left group"
+            className="cursor-pointer p-6 bg-gradient-to-br from-purple-600/20 to-pink-900/10 border border-purple-500/20 rounded-2xl text-left group"
           >
             <div className="flex items-center justify-between">
               <div>
@@ -274,7 +273,7 @@ export default function Dashboard() {
             onClick={() => router.push('/summarise')}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="p-6 bg-gradient-to-br from-cyan-600/20 to-blue-600/10 border border-cyan-500/20 rounded-2xl text-left group"
+            className="cursor-pointer p-6 bg-gradient-to-br from-cyan-600/20 to-blue-600/10 border border-cyan-500/20 rounded-2xl text-left group"
           >
             <div className="flex items-center justify-between">
               <div>
@@ -292,7 +291,7 @@ export default function Dashboard() {
               onClick={() => router.push('/upgrade')}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="p-6 bg-gradient-to-br from-amber-600/20 to-orange-600/10 border border-amber-500/20 rounded-2xl text-left group md:col-span-2"
+              className="cursor-pointer p-6 bg-gradient-to-br from-amber-600/20 to-orange-600/10 border border-amber-500/20 rounded-2xl text-left group md:col-span-2"
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -313,7 +312,7 @@ export default function Dashboard() {
             <h2 className="text-xl font-bold text-white">Recent Activity</h2>
             <button
               onClick={fetchUserData}
-              className="text-sm text-purple-400 hover:text-purple-300 flex items-center gap-2"
+              className="cursor-pointer text-sm text-purple-400 hover:text-purple-300 flex items-center gap-2"
             >
               <RefreshCw size={14} />
               Refresh

@@ -100,7 +100,7 @@ export default function AuthPage() {
         </div>
 
         {/* Main Form Container */}
-        <div className="flex-1 flex flex-col px-8 md:px-16 lg:px-20 py-8 lg:py-12">
+        <div className="bg-[#ecffec] flex-1 flex flex-col px-8 md:px-16 lg:px-20 py-8 lg:py-12">
           {/* Header Navigation */}
           <div className="flex justify-between items-center mb-8 lg:mb-12">
             <motion.button

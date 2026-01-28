@@ -30,8 +30,8 @@ export default function Sidebar({
     userName,
     userEmail,
     mascotId = 1,
-    isDarkMode = true,
-    onToggleDarkMode
+    // isDarkMode = true,
+    // onToggleDarkMode
 }) {
     const router = useRouter();
     const pathname = usePathname();
@@ -79,11 +79,10 @@ export default function Sidebar({
                     );
                 })}
 
-                {/* Divider */}
                 <div className="my-4 border-t border-white/10" />
 
                 {/* Dark Mode Toggle */}
-                <motion.button
+                {/* <motion.button
                     onClick={onToggleDarkMode}
                     whileHover={{ x: 4 }}
                     className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all text-left"
@@ -91,16 +90,16 @@ export default function Sidebar({
                     <div className="flex items-center gap-3">
                         {isDarkMode ? <Moon size={20} /> : <Sun size={20} />}
                         <span className="font-medium">{isDarkMode ? 'Dark Mode' : 'Light Mode'}</span>
-                    </div>
+                    </div> */}
                     {/* Toggle Switch */}
-                    <div className={`w-10 h-6 rounded-full p-1 transition-colors ${isDarkMode ? 'bg-purple-600' : 'bg-gray-600'}`}>
+                    {/* <div className={`w-10 h-6 rounded-full p-1 transition-colors ${isDarkMode ? 'bg-purple-600' : 'bg-gray-600'}`}>
                         <motion.div
                             className="w-4 h-4 bg-white rounded-full"
                             animate={{ x: isDarkMode ? 16 : 0 }}
                             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                         />
                     </div>
-                </motion.button>
+                </motion.button> */}
 
                 {/* Settings */}
                 <motion.button
