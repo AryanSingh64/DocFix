@@ -188,7 +188,7 @@ export default function Dashboard() {
 
   const handleSignOut = async () => {
     await signOut()
-    router.push('/auth')
+    window.location.href = '/auth'  
   }
 
   const formatBytes = (bytes) => {

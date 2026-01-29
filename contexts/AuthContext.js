@@ -67,9 +67,18 @@ export const AuthProvider = ({ children }) => {
     return { data, error }
   }
 
-  const signOut = async () => {
-    await supabase.auth.signOut()
-  }
+const signOut = async () => {
+  await supabase.auth.signOut({ scope: 'global' })
+  setUser(null)
+  
+  // Clear all Supabase cookies manually
+  document.cookie.split(";").forEach((c) => {
+    const key = c.split("=")[0].trim()
+    if (key.startsWith('sb-')) {
+      document.cookie = `${key}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`
+    }
+  })
+}
 
   return (
     //makes data avail to all child comoponent -- anyone used useAuth() gets this
