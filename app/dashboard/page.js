@@ -12,7 +12,7 @@ import MascotAvatar from '@/components/MascotAvatar'
 export default function Dashboard() {
   const { user, loading: authLoading, signOut } = useAuth()
   const router = useRouter()
-
+  const [summaries, setSummaries] = useState([]);
   const [subscription, setSubscription] = useState(null)
   const [usageHistory, setUsageHistory] = useState([])
   const [usageCount, setUsageCount] = useState(0)
@@ -21,6 +21,7 @@ export default function Dashboard() {
   const [mascotId, setMascotId] = useState(1)
   const [totalStorageSaved, setTotalStorageSaved] = useState(0)
   const [isDarkMode, setIsDarkMode] = useState(true)
+  const [allActivity, setAllActivity] = useState([])
 
   // Initialize dark mode from localStorage
   useEffect(() => {
@@ -121,6 +122,64 @@ export default function Dashboard() {
     }
   }
 
+
+  //summaries fetching
+  useEffect(() => {
+    const fetchSummaries = async () => {
+      if (!user) return;
+      const { data, error } = await supabase
+        .from('summaries')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+      setSummaries(data || []);
+    }
+    fetchSummaries();
+  }, [user])
+
+  // Combine summaries and compressions into one activity list
+  useEffect(() => {
+    const combined = [
+      ...summaries.map(item => ({
+        ...item,
+        type: 'summary',
+        date: item.created_at,
+        displayName: item.file_name,
+      })),
+      ...usageHistory.map(item => ({
+        ...item,
+        type: 'compression',
+        date: item.compressed_at,
+        displayName: item.file_name,
+      }))
+    ].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    setAllActivity(combined);
+  }, [summaries, usageHistory]);
+
+  // Color mapping for activity types
+  const activityColors = {
+    summary: {
+      bg: 'bg-cyan-500/20',
+      border: 'border-cyan-500/30',
+      icon: 'text-cyan-400',
+      badge: 'bg-cyan-500/20 text-cyan-400',
+      label: '✨ Summary'
+    },
+    compression: {
+      bg: 'bg-purple-500/20',
+      border: 'border-purple-500/30',
+      icon: 'text-purple-400',
+      badge: 'bg-purple-500/20 text-purple-400',
+      label: '📦 Compressed'
+    }
+  };
+
+
+
   useEffect(() => {
     const onFocus = () => fetchUserData()
     window.addEventListener('focus', onFocus)
@@ -183,8 +242,8 @@ export default function Dashboard() {
         userName={user.user_metadata?.full_name}
         userEmail={user.email}
         mascotId={mascotId}
-        // isDarkMode={isDarkMode}
-        // onToggleDarkMode={toggleDarkMode}
+      // isDarkMode={isDarkMode}
+      // onToggleDarkMode={toggleDarkMode}
       />
 
       {/* Main Content */}
@@ -306,7 +365,8 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Recent Compressions */}
+
+        {/* Unified Recent Activity */}
         <div id="activity">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-white">Recent Activity</h2>
@@ -319,89 +379,60 @@ export default function Dashboard() {
             </button>
           </div>
 
-          {usageHistory.length === 0 ? (
+          {allActivity.length === 0 ? (
             <div className="p-10 text-center bg-[#1a1625] rounded-2xl border border-white/10">
               <FileText size={48} className="mx-auto text-gray-600 mb-4" />
-              <p className="text-gray-400">
-                No compressions yet. Start by compressing your first PDF!
-              </p>
-              <button
-                onClick={() => router.push('/compress-pdf')}
-                className="mt-4 px-6 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition"
-              >
-                Compress PDF
-              </button>
+              <p className="text-gray-400">No activity yet</p>
             </div>
           ) : (
-            <div className="bg-[#1a1625] border border-white/10 rounded-2xl overflow-hidden">
-              {/* Table Header */}
-              <div className="grid grid-cols-4 gap-4 px-6 py-3 bg-white/5 text-sm text-gray-400 font-medium">
-                <span>Name</span>
-                <span>Progress</span>
-                <span>Saved</span>
-                <span>Status</span>
-              </div>
-
-              {/* Table Rows */}
-              {usageHistory.map((item, index) => {
-                const originalSize = item.original_size || 0
-                const compressedSize = item.compressed_size || 0
-                const savedBytes = originalSize - compressedSize
-                const compressionPercent = originalSize > 0 ? Math.round((1 - compressedSize / originalSize) * 100) : 0
+            <div className="space-y-3">
+              {allActivity.map((item, index) => {
+                const colors = activityColors[item.type];
                 return (
                   <motion.div
-                    key={item.id}
+                    key={`${item.type}-${item.id}`}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className={`grid grid-cols-4 gap-4 px-6 py-4 items-center ${index < usageHistory.length - 1 ? 'border-b border-white/5' : ''
-                      }`}
+                    transition={{ delay: index * 0.03 }}
+                    className={`p-4 rounded-xl border ${colors.border} ${colors.bg}`}
                   >
-                    {/* File Name */}
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                        <FileText size={16} className="text-purple-400" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-white truncate max-w-[150px]">{item.file_name}</p>
-                        <p className="text-xs text-gray-500">{formatDate(item.compressed_at)}</p>
-                      </div>
-                    </div>
-
-                    {/* Progress */}
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 h-2 bg-gray-700 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"
-                            style={{ width: `${compressionPercent}%` }}
-                          />
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-lg ${colors.bg} flex items-center justify-center`}>
+                          <FileText size={18} className={colors.icon} />
                         </div>
-                        <span className="text-xs text-gray-400">{compressionPercent}%</span>
+                        <div>
+                          <p className="font-medium text-white">{item.displayName}</p>
+                          <p className="text-xs text-gray-500">{formatDate(item.date)}</p>
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Saved */}
-                    <div>
-                      <p className="text-sm font-medium text-green-400">
-                        {savedBytes > 0 ? formatBytes(savedBytes) : '—'}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {originalSize > 0 ? `${formatBytes(originalSize)} → ${formatBytes(compressedSize)}` : 'Size unknown'}
-                      </p>
-                    </div>
-
-                    {/* Status */}
-                    <div className="flex items-center justify-between">
-                      <span className="px-3 py-1 text-xs font-medium bg-green-500/20 text-green-400 rounded-full">
-                        Completed
+                      <span className={`px-3 py-1 text-xs font-medium rounded-full ${colors.badge}`}>
+                        {colors.label}
                       </span>
-                      <button className="text-gray-400 hover:text-white">
-                        <MoreVertical size={16} />
-                      </button>
                     </div>
+
+                    {/* Show preview for summaries */}
+                    {item.type === 'summary' && (
+                      <div className="mt-2">
+                        <p className="text-white/60 text-sm line-clamp-2">{item.summary_text}</p>
+                        <button
+                          onClick={() => navigator.clipboard.writeText(item.summary_text)}
+                          className="mt-2 text-xs bg-white/10 px-3 py-1 rounded hover:bg-white/20 transition"
+                        >
+                          📋 Copy Summary
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Show size info for compressions */}
+                    {item.type === 'compression' && item.original_size && (
+                      <p className="text-white/60 text-sm mt-2">
+                        {formatBytes(item.original_size)} → {formatBytes(item.compressed_size)}
+                      </p>
+                    )}
                   </motion.div>
-                )
+                );
               })}
             </div>
           )}

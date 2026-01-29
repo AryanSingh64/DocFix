@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import {createClient} from "@supabase/supabase-js";
 
 export async function POST(request) {
     try {
@@ -8,6 +9,12 @@ export async function POST(request) {
 
         const formData = await request.formData();
         const file = formData.get('pdf');
+        const tone = formData.get('tone');
+
+        const userId = formData.get('user_id');
+        const fileName = formData.get('file_name');
+
+        
 
         if (!file) {
             return NextResponse.json(
@@ -32,7 +39,7 @@ export async function POST(request) {
             const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
         //lets get that tone
-        const tone = formData.get('tone');
+        
         console.log(tone);
         const toneInstruction = {
               professional: "Use a formal, professional tone. Be precise, structured, and use business language. Focus on facts and key metrics.",
@@ -54,6 +61,27 @@ export async function POST(request) {
              console.log(summary);
              console.log(result);
              
+
+            if(userId){
+                const supabase = createClient(
+                    process.env.NEXT_PUBLIC_SUPABASE_URL,
+                    process.env.SUPABASE_SERVICE_ROLE_KEY
+                );
+
+            const {error} = await supabase.from('summaries').insert({
+                user_id: userId,
+                file_name: file.name,        // Use file.name, not formData
+                summary_text: summary,       // Save the actual summary
+                tone: tone
+            });
+
+            if(error){
+                console.error('Error saving summary:', error);
+            } else {
+                console.log('Summary saved successfully');
+            }
+        }
+             
              
             return NextResponse.json({
                 text: text,
@@ -61,6 +89,12 @@ export async function POST(request) {
                 pages: data.numpages,
                 info: data.info
             });
+
+
+            //save if user logged in okayyy
+            
+
+
         } else {
             console.warn("GEMINI_API_KEY not found in environment variables.");
             return NextResponse.json({
