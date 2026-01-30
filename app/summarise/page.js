@@ -288,7 +288,7 @@ const page = () => {
                 </div>
 
                 <p className="text-white/70">
-                  {progress < 50 ? '📤 Uploading...' : '✨ Generating summary...'} {progress}%
+                  {progress < 50 ? 'Uploading...' : '✨ Generating summary...'} {progress}%
                 </p>
               </div>
             </div>

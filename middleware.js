@@ -44,7 +44,7 @@ export async function middleware(request) {
                     })
 
                     // SECOND LOOP: Set cookies on the RESPONSE object
-                    // This ensures the browser receives the updated cookies
+                    // This ensures theT browser receives the updated cookies
                     cookiesToSet.forEach(({ name, value, options }) =>
                         response.cookies.set(name, value, options)
                     )
@@ -53,7 +53,6 @@ export async function middleware(request) {
         }
     )
 
-    // STEP 3: Check if user has an active session (are they logged in?)
     const { data: { session } } = await supabase.auth.getSession()
 
     //!! t or f
