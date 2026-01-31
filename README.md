@@ -95,7 +95,7 @@ DocFix/
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/yourusername/docfix.git
+   git clone https://github.com/AryanSingh64/DocFix/
    cd docfix
    ```
 
