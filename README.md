@@ -1,8 +1,6 @@
-<p align="center">
-  <img src="public/logo.png" alt="DocFix Logo" width="80" height="80">
-</p>
+<h1 align="center" style="color:#155DFC;">DocFix</h1>
 
-<h1 align="center">DocFix</h1>
+
 
 <p align="center">
   <strong>A modern PDF toolkit for compression, merging, and AI-powered summarization</strong>
