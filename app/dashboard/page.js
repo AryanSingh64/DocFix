@@ -215,14 +215,14 @@ export default function Dashboard() {
       <div className="flex justify-center items-center h-screen bg-[#13111a]">
         <div className="text-center">
           <div className="relative w-16 h-20 mx-auto mb-4">
-            <div className="absolute inset-0 bg-purple-500 rounded-lg animate-pulse"></div>
-            <div className="absolute top-0 right-0 w-4 h-4 bg-purple-300 rounded-bl-lg"></div>
+            <div className="absolute inset-0 bg-red-500 rounded-lg animate-pulse"></div>
+            <div className="absolute top-0 right-0 w-4 h-4 bg-red-300 rounded-bl-lg"></div>
             <span className="absolute inset-0 flex items-center justify-center text-white font-bold text-sm">PDF</span>
           </div>
           <div className="flex space-x-1 justify-center">
-            <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce [animation-delay:0ms]"></div>
-            <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce [animation-delay:150ms]"></div>
-            <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce [animation-delay:300ms]"></div>
+            <div className="w-2 h-2 bg-red-500 rounded-full animate-bounce [animation-delay:0ms]"></div>
+            <div className="w-2 h-2 bg-red-500 rounded-full animate-bounce [animation-delay:150ms]"></div>
+            <div className="w-2 h-2 bg-red-500 rounded-full animate-bounce [animation-delay:300ms]"></div>
           </div>
         </div>
       </div>
@@ -242,16 +242,9 @@ export default function Dashboard() {
         userName={user.user_metadata?.full_name}
         userEmail={user.email}
         mascotId={mascotId}
-      // isDarkMode={isDarkMode}
-      // onToggleDarkMode={toggleDarkMode}
       />
-
-      {/* Main Content */}
       <main className="flex-1 ml-0 lg:ml-64 p-4 sm:p-6 lg:p-8 pt-20 lg:pt-8">
-        {/* Top Header */}
         <div className="flex items-center justify-end">
-
-          {/* Right Actions */}
           <div className="flex items-center gap-4">
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -267,10 +260,9 @@ export default function Dashboard() {
               className="w-10 h-10 rounded-xl bg-[#1a1625] border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition relative"
             >
               <Bell size={18} />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-purple-500 rounded-full"></span>
+              <span className="absolute top-2 right-2 w-2 h-2 bg-[#155DFC] rounded-full"></span>
             </motion.button>
 
-            {/* Profile Avatar */}
             <MascotAvatar
               mascotId={mascotId}
               size="sm"
@@ -280,7 +272,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Welcome Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -315,7 +306,7 @@ export default function Dashboard() {
             onClick={() => router.push('/compress-pdf')}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="cursor-pointer p-6 bg-gradient-to-br from-purple-600/20 to-pink-900/10 border border-purple-500/20 rounded-2xl text-left group"
+            className="cursor-pointer p-6 bg-gradient-to-br from-blue-600/20 to-pink-900/10 border border-purple-500/20 rounded-2xl text-left group"
           >
             <div className="flex items-center justify-between">
               <div>
@@ -332,7 +323,7 @@ export default function Dashboard() {
             onClick={() => router.push('/summarise')}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="cursor-pointer p-6 bg-gradient-to-br from-cyan-600/20 to-blue-600/10 border border-cyan-500/20 rounded-2xl text-left group"
+            className="cursor-pointer p-6 bg-gradient-to-br from-blue-600/20 to-blue-600/10 border border-cyan-500/20 rounded-2xl text-left group"
           >
             <div className="flex items-center justify-between">
               <div>
@@ -366,7 +357,6 @@ export default function Dashboard() {
         </div>
 
 
-        {/* Unified Recent Activity */}
         <div id="activity">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-white">Recent Activity</h2>
@@ -412,7 +402,6 @@ export default function Dashboard() {
                       </span>
                     </div>
 
-                    {/* Show preview for summaries */}
                     {item.type === 'summary' && (
                       <div className="mt-2">
                         <p className="text-white/60 text-sm line-clamp-2">{item.summary_text}</p>
@@ -425,7 +414,6 @@ export default function Dashboard() {
                       </div>
                     )}
 
-                    {/* Show size info for compressions */}
                     {item.type === 'compression' && item.original_size && (
                       <p className="text-white/60 text-sm mt-2">
                         {formatBytes(item.original_size)} → {formatBytes(item.compressed_size)}
