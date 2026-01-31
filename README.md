@@ -1,4 +1,4 @@
-<img src="https://capsule-render.vercel.app/api?type=blur&height=300&color=FF5FCF&text=DocFix&textBg=false&fontColor=155DFC&animation=fadeIn"></img>
+<img src="https://capsule-render.vercel.app/api?type=blur&height=300&color=FF5FCF&text=DocFix&textBg=false&fontColor=155DFC&animation=fadeIn](https://capsule-render.vercel.app/api?type=waving&height=300&text=DocFix&textBg=false&fontColor=155DFC&animation=fadeIn"></img>
 
 
 
