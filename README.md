@@ -1,8 +1,6 @@
-<p align="center">
-  <img src="public/logo.png" alt="DocFix Logo" width="80" height="80">
-</p>
+![Header](https://capsule-render.vercel.app/api?type=waving&height=300&color=3e99c1&text=DocFix&textBg=false&fontColor=ffffffff&animation=fadeIn)
 
-<h1 align="center">DocFix</h1>
+
 
 <p align="center">
   <strong>A modern PDF toolkit for compression, merging, and AI-powered summarization</strong>
@@ -21,11 +19,11 @@
 
 <!-- Add your screenshots here -->
 <p align="center">
-  <img src="docs/screenshot-home.png" alt="Home Page" width="700">
+  <img src="https://github.com/AryanSingh64/DocFix/blob/main/profile.gif" alt="Home Page" width="700">
 </p>
 
 <p align="center">
-  <img src="docs/screenshot-dashboard.png" alt="Dashboard" width="700">
+  <img src="https://github.com/AryanSingh64/DocFix/blob/main/Dashboard.png" alt="Dashboard" width="700">
 </p>
 
 ---
