@@ -19,7 +19,7 @@
 
 <!-- Add your screenshots here -->
 <p align="center">
-  <img src="docs/screenshot-home.png" alt="Home Page" width="700">
+  <img src="https://github.com/AryanSingh64/DocFix/blob/main/profile.gif" alt="Home Page" width="700">
 </p>
 
 <p align="center">
