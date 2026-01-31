@@ -7,7 +7,7 @@ const nextConfig = {
       bodySizeLimit: '100mb',
     },
     // This is the key setting for API routes - allows large file uploads
-    middlewareClientMaxBodySize: '100mb',
+    proxyClientMaxBodySize: '100mb',
   },
 };
 
