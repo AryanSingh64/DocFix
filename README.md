@@ -23,7 +23,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshot-dashboard.png" alt="Dashboard" width="700">
+  <img src="https://github.com/AryanSingh64/DocFix/blob/main/Dashboard.png" alt="Dashboard" width="700">
 </p>
 
 ---
