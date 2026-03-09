@@ -1,0 +1,36 @@
+# Version control
+.git
+.gitignore
+
+# Dependencies (will be reinstalled in Docker)
+node_modules
+
+# Next.js build output (will be rebuilt in Docker)
+.next
+
+# Environment files — NEVER bake secrets into the image
+# Set these as environment variables in Koyeb's dashboard
+.env
+.env.*
+.env.local
+.env.development
+.env.production
+
+# Dev / editor files
+.vscode
+.idea
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docs & extras not needed at runtime
+README.md
+RAILWAY_DEPLOY.md
+LEARNING_ROADMAP.*
+*.png
+*.gif

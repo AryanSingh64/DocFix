@@ -178,20 +178,38 @@ const page = () => {
         return;
       }
 
-      const originalSize = parseInt(response.headers.get('X-Original-Size'));
-      const compressedSize = parseInt(response.headers.get('X-Compressed-Size'));
-      const compressionRatio = response.headers.get('X-Compression-Ratio');
+      // Read headers BEFORE consuming the body as a blob
+      const rawOriginal = response.headers.get('X-Original-Size');
+      const rawCompressed = response.headers.get('X-Compressed-Size');
+      const rawRatio = response.headers.get('X-Compression-Ratio');
+      const usedOriginal = response.headers.get('X-Used-Original') === 'true';
+
+      const originalSize = rawOriginal ? parseInt(rawOriginal, 10) : null;
+      const compressedSize = rawCompressed ? parseInt(rawCompressed, 10) : null;
+      // parseFloat handles '45.23' correctly; fallback to null if missing or NaN
+      const compressionRatioNum = rawRatio ? parseFloat(rawRatio) : null;
+      const compressionRatio = (
+        compressionRatioNum !== null && !isNaN(compressionRatioNum)
+          ? compressionRatioNum.toFixed(1)
+          : null
+      );
 
       setProgress(80);
 
       const blob = await response.blob();
       setCompressedFile(blob);
 
+      const savedBytes =
+        originalSize !== null && compressedSize !== null
+          ? Math.max(0, originalSize - compressedSize)
+          : null;
+
       setStats({
         originalSize,
         compressedSize,
         compressionRatio,
-        savedBytes: originalSize - compressedSize
+        savedBytes,
+        usedOriginal,   // true when GS couldn't beat the original size
       });
 
       setProgress(100);
@@ -234,13 +252,14 @@ const page = () => {
     setError(null);
   };
 
-  // Helper function to format bytes
+  // Helper function to format bytes — guards against null/NaN/0
   const formatBytes = (bytes) => {
+    if (bytes === null || bytes === undefined || isNaN(bytes)) return '—';
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    return (Math.round(bytes / Math.pow(k, i) * 100) / 100) + ' ' + sizes[i];
   };
 
   // Quality button styles helper
@@ -412,10 +431,25 @@ const page = () => {
             )}
 
             {isComplete && stats && (
-              <div className="bg-gradient-to-br from-green-500/20 to-green-500/10 border border-green-500/50 rounded-xl p-6 text-center">
-                <div className="text-green-500 text-xl font-semibold mb-4">
-                  ✅ Compression Complete!
+              <div className={`rounded-xl p-6 text-center border ${stats.usedOriginal
+                  ? 'bg-gradient-to-br from-amber-500/20 to-amber-500/10 border-amber-500/50'
+                  : 'bg-gradient-to-br from-green-500/20 to-green-500/10 border-green-500/50'
+                }`}>
+
+                <div className={`text-xl font-semibold mb-4 ${stats.usedOriginal ? 'text-amber-400' : 'text-green-500'
+                  }`}>
+                  {stats.usedOriginal
+                    ? '⚡ Already Optimal!'
+                    : '✅ Compression Complete!'}
                 </div>
+
+                {stats.usedOriginal && (
+                  <p className="text-white/60 text-sm mb-5">
+                    This PDF is already highly compressed — Ghostscript couldn\'t make it smaller,
+                    so we returned your original file untouched.
+                  </p>
+                )}
+
                 <div className="grid grid-cols-3 gap-4 mb-5">
                   <div className="text-center">
                     <div className="text-white text-lg font-semibold">
@@ -425,22 +459,27 @@ const page = () => {
                   </div>
                   <div className="text-center">
                     <div className="text-white text-lg font-semibold">
-                      {formatBytes(stats.compressedSize)}
+                      {stats.usedOriginal ? '—' : formatBytes(stats.compressedSize)}
                     </div>
                     <div className="text-white/50 text-xs mt-1">Compressed</div>
                   </div>
                   <div className="text-center">
                     <div className="text-white text-lg font-semibold">
-                      {stats.compressionRatio}%
+                      {stats.usedOriginal
+                        ? '0%'
+                        : stats.compressionRatio !== null
+                          ? `${stats.compressionRatio}%`
+                          : '—'}
                     </div>
                     <div className="text-white/50 text-xs mt-1">Saved</div>
                   </div>
                 </div>
+
                 <button
                   onClick={handleDownload}
                   className="py-3.5 px-8 bg-gradient-to-br from-green-500 to-green-600 text-white border-none rounded-lg cursor-pointer text-base font-semibold mr-3"
                 >
-                  ⬇️ Download Compressed PDF
+                  ⬇️ Download {stats.usedOriginal ? 'Original' : 'Compressed'} PDF
                 </button>
                 <button
                   onClick={handleReset}
